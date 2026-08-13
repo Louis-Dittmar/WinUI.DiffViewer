@@ -110,7 +110,7 @@
                                 <!-- Gutter widths are set from code (digit count x char width),
                                      so the numbers never clip when zooming. -->
                                 <ColumnDefinition Width="Auto" />
-                                <ColumnDefinition Width="36" />
+                                <ColumnDefinition Width="48" />
                                 <ColumnDefinition Width="Auto" />
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="Auto" />

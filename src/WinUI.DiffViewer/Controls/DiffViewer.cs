@@ -1019,10 +1019,12 @@ public sealed class DiffViewer : Control
 
             if (ShowApplyButtons)
             {
-                // IntelliJ-style accept arrows: ">" copies the left block to the
-                // right side, "<" the right block to the left side.
-                AddApplyButton(canvas, fragment, toRight: true, x: 1, y: lTop, height);
-                AddApplyButton(canvas, fragment, toRight: false, x: width - 17, y: rTop, height);
+                // IntelliJ-style accept arrows (12x12 double chevrons in the
+                // original): each button sits on its TARGET side — "«" on the
+                // left pulls the right block in, "»" on the right pulls the
+                // left block in.
+                AddApplyButton(canvas, fragment, toRight: false, x: 1, y: lTop, height);
+                AddApplyButton(canvas, fragment, toRight: true, x: width - 23, y: rTop, height);
             }
         }
     }
@@ -1033,16 +1035,19 @@ public sealed class DiffViewer : Control
 
         var button = new Button
         {
-            Width = 16,
-            Height = 16,
+            Width = 22,
+            Height = 22,
             Padding = new Thickness(0),
             BorderThickness = new Thickness(0),
             Background = new SolidColorBrush(Microsoft.UI.Colors.Transparent),
             CornerRadius = new CornerRadius(2),
-            Content = new FontIcon
+            Content = new TextBlock
             {
-                Glyph = toRight ? "\uE76C" : "\uE76B", // ChevronRight / ChevronLeft
-                FontSize = 9,
+                Text = toRight ? "\u00BB" : "\u00AB", // \u00BB / \u00AB
+                FontSize = 18,
+                TextLineBounds = TextLineBounds.Tight,
+                HorizontalAlignment = HorizontalAlignment.Center,
+                VerticalAlignment = VerticalAlignment.Center,
             },
         };
         ToolTipService.SetToolTip(button, toRight
