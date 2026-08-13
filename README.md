@@ -1,31 +1,28 @@
 # WinUI.DiffViewer
 
-Ein **Diff-Viewer-Control für WinUI 3** im Stil von [WinUI.TableView](https://github.com/w-ahmad/WinUI.TableView):
-eine wiederverwendbare Klassenbibliothek mit einem Templated Control, das zwei Texte vergleicht und die
-Unterschiede wie der JetBrains/IntelliJ-Diff-Viewer darstellt — Side-by-Side oder Unified, mit Zeilen- und
-Wort-Highlighting, Zeilennummern-Gutter und synchronem Scrollen.
+This is a Diff Viewer Control for WinUI 3. It is a reusable class library with a templated control that compares two texts and displays the differences, similar to the JetBrains/IntelliJ Diff Viewer. It supports side-by-side or unified views with line and word highlighting, line number gutters and synchronous scrolling.
 
-Die **Diff-Engine ist eine C#-Portierung des IntelliJ-Algorithmus** aus
-[intellij-community](https://github.com/JetBrains/intellij-community) (Apache 2.0, siehe `NOTICE`):
-Myers-O(ND)-LCS, zeilen-/wort-/zeichenweiser Vergleich und die Whitespace-Ignore-Policies.
+The diff engine is a C# port of the IntelliJ algorithm from IntelliJ Community (Apache 2.0 licence; see NOTICE). It features Myers O(ND) LCS, line/word/character-based comparison and whitespace ignore policies. And Currently has some MAJOR Bugs.
 
 ## Features
 
-| Feature | IntelliJ-Vorbild |
-|---|---|
-| Side-by-Side- und Unified-Modus | `SimpleDiffViewer` / `UnifiedDiffViewer` |
-| Grün = hinzugefügt, Blau = geändert, Grau = gelöscht | `DiffColors` (DIFF_INSERTED/MODIFIED/DELETED) |
-| Wort-/Zeichen-Highlighting in geänderten Zeilen | `ByWordRt` / `ByCharRt` + `InlineHighlighterBuilder` |
+| Feature | IntelliJ Counterpart |
+| --- | --- |
+| Side-by-Side and Unified mode | `SimpleDiffViewer` / `UnifiedDiffViewer` |
+| Green = added, Blue = modified, Gray = deleted | `DiffColors` (DIFF_INSERTED/MODIFIED/DELETED) |
+| Word/Character highlighting in modified lines | `ByWordRt` / `ByCharRt` + `InlineHighlighterBuilder` |
 | Ignore Differences: None / Trim / Ignore whitespaces | `ComparisonPolicy` |
 | Highlighting: Lines / Words / Characters / None | `HighlightPolicy` |
-| Ausgerichtete Panes (Füllzeilen) + synchrones Scrollen | `AlignedDiffModel` + `SyncScrollSupport` |
-| Berechnung im Hintergrund-Thread, latest-wins | `DiffViewerBase.rediff()` |
-| Light/Dark/HighContrast-Paletten | Editor-Farbschemata |
-| Block-Splitting: Löschungen/Einfügungen in großen Änderungsblöcken werden eigene Fragmente | `ByWordRt.compareAndSplit` + `LineFragmentSplitter` |
-| Grenzen-Korrektur (Änderungen rasten an Leerzeilen/Whitespace ein) | `ChunkOptimizer` (Line + Word) |
-| Strg+Mausrad-Zoom, FontFamily/FontSize live umschaltbar | Editor-Zoom |
+| Aligned panes (filler lines) + synchronous scrolling | `AlignedDiffModel` + `SyncScrollSupport` |
+| Background thread calculation, latest-wins | `DiffViewerBase.rediff()` |
+| Light/Dark/HighContrast palettes | Editor color schemes |
+| Block splitting: Deletions/Insertions in large modification blocks become separate fragments | `ByWordRt.compareAndSplit` + `LineFragmentSplitter` |
+| Boundary correction (changes snap to empty lines/whitespace) | `ChunkOptimizer` (Line + Word) |
+| Ctrl+Mouse wheel zoom, FontFamily/FontSize switchable live | Editor zoom |
 
-## Verwendung
+
+
+## Usage
 
 ```xml
 <Page xmlns:dv="using:WinUI.DiffViewer.Controls">
@@ -34,15 +31,17 @@ Myers-O(ND)-LCS, zeilen-/wort-/zeichenweiser Vergleich und die Whitespace-Ignore
                    IgnorePolicy="Default"
                    HighlightMode="Words" />
 </Page>
+
 ```
 
 ```csharp
-Viewer.OldText = File.ReadAllText("alt.cs");
-Viewer.NewText = File.ReadAllText("neu.cs");
-// Alle Properties sind DependencyProperties — jede Änderung rechnet den Diff neu.
+Viewer.OldText = File.ReadAllText("old.cs");
+Viewer.NewText = File.ReadAllText("new.cs");
+// All properties are DependencyProperties; every change triggers a diff recalculation.
+
 ```
 
-Die Engine ist auch ohne UI nutzbar:
+The engine can also be used without a UI:
 
 ```csharp
 using WinUI.DiffViewer.Core;
@@ -53,46 +52,42 @@ var result = DiffComputer.Compare(oldText, newText, new DiffOptions {
 });
 foreach (LineFragment f in result.Fragments)
     Console.WriteLine($"{f.Type}: {f}");
+
 ```
 
-## Projektstruktur
+## Project Structure
 
 ```
 src/WinUI.DiffViewer/
-  Core/        Diff-Engine (reines C#, keine UI-Abhängigkeit außer dem Projekt-TFM)
-  Model/       Zeilenmodell: DiffRow, DiffRowBuilder (Ausrichtung, Highlight-Spans)
-  Controls/    DiffViewer (Templated Control), HighlightableTextBlock, Konverter
-  Themes/      Generic.xaml (Template + Farbpaletten)
-samples/WinUI.DiffViewer.SampleApp/   Gallery-Sample-App (siehe unten)
-docs/ARCHITECTURE.md                  Mapping Original → Portierung, Designentscheidungen
+  Core/        Diff engine (pure C#, no UI dependency other than the project TFM)
+  Model/       Line model: DiffRow, DiffRowBuilder (alignment, highlight spans)
+  Controls/    DiffViewer (Templated Control), HighlightableTextBlock, Converters
+  Themes/      Generic.xaml (Template + color palettes)
+samples/WinUI.DiffViewer.SampleApp/  Gallery sample app (see below)
+docs/ARCHITECTURE.md                 Mapping Original -> Port, design decisions
+
 ```
 
 ## Sample App
 
-`samples/WinUI.DiffViewer.SampleApp` ist eine Gallery-App nach dem Vorbild der
-[WinUI.TableView-SampleApp](https://github.com/w-ahmad/WinUI.TableView): links eine
-NavigationView mit einer Seite pro Feature, rechts das Live-Beispiel mit einem
-Options-Panel, das die Control-Properties direkt bindet — plus aufklappbarem
-Quellcode (XAML/C#, mit live eingesetzten Property-Werten), Theme-Toggle pro
-Beispiel und GitHub-Links auf die jeweilige Page.
+`samples/WinUI.DiffViewer.SampleApp` is a Gallery app based on the WinUI.TableView.SampleApp: on the left is a NavigationView with one page per feature, and on the right is the live example with an Options panel that directly binds the control properties — plus collapsible source code (XAML/C# with live property values), a theme toggle per example and GitHub links to the respective page.
 
-| Seite | Zeigt |
-|---|---|
-| Overview | Alle Optionen an einem Beispiel (View mode, Highlighting, Ignore, Sync-Scroll) |
+
+| Page | Demonstrates |
+| --- | --- |
+| Overview | All options in one example (View mode, Highlighting, Ignore, Sync-Scroll) |
 | View Modes | `ViewMode`: SideBySide vs. Unified |
 | Highlighting | `HighlightMode`: Lines / Words / Characters / None |
 | Whitespace Handling | `IgnorePolicy`: Default / TrimWhitespaces / IgnoreWhitespaces |
-| Live Editing | Editierbare Panes, `DiffComputed`-Event-Log |
-| Synchronized Scrolling | Unterschiedlich lange Dokumente, Scroll-Mapping über Change-Anker |
-| Large Files | Generierte Großdokumente + Berechnungszeit |
-| Settings | App-Theme, Editor-Font (Consolas/Cascadia/JetBrains Mono) + Schriftgröße, Version, Links |
+| Live Editing | Editable panes, `DiffComputed` event log |
+| Synchronized Scrolling | Documents of different lengths, scroll mapping via change anchors |
+| Large Files | Generated large documents + computation time |
+| Settings | App theme, editor font (Consolas/Cascadia/JetBrains Mono) + font size, version, links |
 
-## Als NuGet-Paket (GitHub Packages)
+## As a NuGet Package (GitHub Packages)
 
-Der Workflow `.github/workflows/publish-nuget.yml` paketiert die Bibliothek und
-veröffentlicht sie in **GitHub Packages**, sobald dieser Ordner als eigenes
-GitHub-Repository gepusht und ein Tag `v*` (z. B. `v0.2.0`) gesetzt wird —
-alternativ manuell über „Run workflow".
+The workflow `.github/workflows/publish-nuget.yml` packages the library and publishes it to **GitHub Packages** as soon as this folder is pushed as its own GitHub repository and a `v*` tag (e.g., `v0.2.0`) is created. Alternatively, it can be triggered manually via "Run workflow".
+
 
 Verwenden in einem anderen Projekt (`nuget.config` neben der Solution):
 
@@ -134,12 +129,9 @@ dotnet run --project samples/WinUI.DiffViewer.SampleApp   (oder Start über Visu
 > (`Controls/`, `Themes/`, Sample) benötigt Windows und wurde stattdessen einem detaillierten
 > API-Review unterzogen; beim allerersten Build können trotzdem Kleinigkeiten auftreten.
 
-## Farben anpassen
+## Customizing Colors
 
-Die Zeilen- und Wort-Hintergründe werden per Code-Behind (`DiffPalette`) anhand von
-`ActualTheme` gesetzt — sie folgen damit auch Fenster-/Element-Themes, Theme-Wechseln
-zur Laufzeit und deaktivieren sich im High-Contrast-Modus (Systemfarben bleiben lesbar).
-Eigene Farben definierst du in `Application.Resources`; sie haben immer Vorrang:
+The line and word backgrounds are set via code-behind (`DiffPalette`) based on the `ActualTheme`. Thus, they respect window/element themes and runtime theme changes, and they disable themselves in High Contrast mode (system colors remain readable). You can define your own colors in `Application.Resources`; they always take precedence:
 
 ```xml
 <Application.Resources>
@@ -149,13 +141,11 @@ Eigene Farben definierst du in `Application.Resources`; sie haben immer Vorrang:
 </Application.Resources>
 ```
 
-## Bewusste Einschränkungen
+## Known Limitations
 
-- Keine Accept/Append-Chevrons, kein Merge-Modus (Editieren in den Panes geht seit v0.2).
-- Kein Folding („Collapse Unchanged Fragments").
-- Kein Syntax-Highlighting (IntelliJ bekommt das gratis durch echte Editor-Instanzen).
-- Vereinfachungen in der Engine gegenüber dem Original sind in `docs/ARCHITECTURE.md` dokumentiert.
+* No Accept/Append chevrons, no merge mode (editing in the panes is supported since v0.2).
+* No syntax highlighting (IntelliJ gets this for free through real editor instances).
+* Simplifications in the engine compared to the original are documented in `docs/ARCHITECTURE.md`.
 
-## Lizenz
-
-Apache License 2.0 — siehe `LICENSE`. Enthält portierten Code aus JetBrains intellij-community, siehe `NOTICE`.
+## License
+Apache License 2.0, see `LICENSE`. Contains ported code from JetBrains intellij-community, see `NOTICE`.
