@@ -46,5 +46,11 @@ public sealed class DiffRow
     /// <summary>Word/char highlight spans inside <see cref="Text"/>.</summary>
     public IReadOnlyList<HighlightSpan> Highlights { get; init; } = System.Array.Empty<HighlightSpan>();
 
+    /// <summary>
+    /// The single line number shown in unified mode: deleted rows keep their
+    /// old-text number, all other rows show the new-text number.
+    /// </summary>
+    public string UnifiedLineNumber => Kind == DiffRowKind.Deleted ? OldLineNumber : NewLineNumber;
+
     public bool IsFiller => Kind == DiffRowKind.Filler;
 }
