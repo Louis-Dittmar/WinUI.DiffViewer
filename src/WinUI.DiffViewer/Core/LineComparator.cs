@@ -59,7 +59,12 @@ public static class LineComparator
     {
         var diffLines1 = GetLines(lines1, policy);
         var diffLines2 = GetLines(lines2, policy);
-        return DiffAlgorithm.Diff(diffLines1, diffLines2);
+        var changes = DiffAlgorithm.Diff(diffLines1, diffLines2);
+
+        // Boundary correction (port of LineChunkOptimizer): ambiguous change
+        // boundaries snap to empty/unimportant lines, so insertions/deletions
+        // appear as their own blocks instead of merging into neighbors.
+        return new LineChunkOptimizer(diffLines1, diffLines2).Build(changes);
     }
 
     private static List<DiffLine> GetLines(IReadOnlyList<string> lines, ComparisonPolicy policy)

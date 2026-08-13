@@ -55,6 +55,22 @@ public static class DiffComputer
         var (lines1, lineStarts1) = SplitLines(text1);
         var (lines2, lineStarts2) = SplitLines(text2);
 
+        // One side is completely empty: mark the whole other side as pure
+        // deletion/insertion. (Strict IntelliJ semantics would report Modified
+        // when the non-empty side lacks a trailing newline, because the empty
+        // document still counts as one empty line — for an interactive editor
+        // "everything was deleted" gray is the expected picture.)
+        if (text1.Length > 0 && text2.Length == 0)
+        {
+            var deletedAll = new LineFragment(0, lines1.Count, 0, 0, 0, text1.Length, 0, 0);
+            return new DiffResult(lines1, lines2, new List<LineFragment> { deletedAll });
+        }
+        if (text1.Length == 0 && text2.Length > 0)
+        {
+            var insertedAll = new LineFragment(0, 0, 0, lines2.Count, 0, 0, 0, text2.Length);
+            return new DiffResult(lines1, lines2, new List<LineFragment> { insertedAll });
+        }
+
         var changes = LineComparator.Compare(lines1, lines2, options.Policy);
 
         var fragments = new List<LineFragment>(changes.Count);
@@ -73,9 +89,13 @@ public static class DiffComputer
                     string chunk1 = text1.Substring(fragment.StartOffset1, length1);
                     string chunk2 = text2.Substring(fragment.StartOffset2, length2);
 
-                    fragment.InnerFragments = options.HighlightMode == HighlightMode.Words
-                        ? WordComparator.Compare(chunk1, chunk2, options.Policy)
-                        : CharComparator.Compare(chunk1, chunk2, options.Policy);
+                    // Word-correlation split (port of ByWordRt.compareAndSplit):
+                    // the Modified block may fall apart into several correctly
+                    // typed fragments (Deleted/Inserted/Modified) with inner
+                    // highlights per Modified sub-fragment.
+                    fragments.AddRange(ByWordSplitter.CompareAndSplit(
+                        chunk1, chunk2, fragment, options.Policy, options.HighlightMode));
+                    continue;
                 }
             }
 
@@ -112,7 +132,12 @@ public static class DiffComputer
     {
         if (endLine == startLine) return OffsetOfLineStart(lines, lineStarts, startLine);
         int lastLine = endLine - 1;
-        return lineStarts[lastLine] + lines[lastLine].Length;
+        int end = lineStarts[lastLine] + lines[lastLine].Length;
+        // Include the closing '\n' (IntelliJ getLineEnd(line, includeNewline)) —
+        // the word-correlation splitter needs the newline chunks to find line
+        // boundaries; only the very last line has none to include.
+        if (lastLine != lines.Count - 1) end += 1;
+        return end;
     }
 
     /// <summary>Converts "\r\n" and lone '\r' to '\n' so the line model sees every break.</summary>
