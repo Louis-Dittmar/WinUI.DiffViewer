@@ -766,11 +766,36 @@ public sealed class DiffViewer : Control
             pane.GutterLineCount = lineCount;
         }
 
+        // Gutter width follows the widest line number at the current font
+        // metrics, so zooming never clips the numbers.
+        int digits = Math.Max(2, CountDigits(lineCount));
+        double numbersWidth = Math.Ceiling(digits * _measuredCharWidth) + 4;
+        double hostWidth = numbersWidth + 8; // 2px canvas offset + breathing room
+        if (pane.NumbersHost != null && (double.IsNaN(pane.NumbersHost.Width) || Math.Abs(pane.NumbersHost.Width - hostWidth) > 0.5))
+        {
+            pane.NumbersHost.Width = hostWidth;
+        }
+        if (double.IsNaN(pane.Numbers.Width) || Math.Abs(pane.Numbers.Width - numbersWidth) > 0.5)
+        {
+            pane.Numbers.Width = numbersWidth;
+        }
+
         // No LineHeight override: the gutter uses the same font as the editor,
         // so its natural line spacing matches the editor's exactly.
 
         double top = (pane.Editor?.Padding.Top ?? 0) - (pane.Scroller?.VerticalOffset ?? 0);
         Canvas.SetTop(pane.Numbers, top);
+    }
+
+    private static int CountDigits(int value)
+    {
+        int digits = 1;
+        while (value >= 10)
+        {
+            value /= 10;
+            digits++;
+        }
+        return digits;
     }
 
     private void DrawPane(Pane pane, bool side1, double lh, bool highContrast)
@@ -1009,6 +1034,18 @@ public sealed class DiffViewer : Control
 
         bool highContrast = IsHighContrast();
         grid.Background = DiffPalette.GetRowBrush(row.Kind, ActualTheme, highContrast);
+
+        // Number column width follows the widest line number at the current
+        // font metrics (same reasoning as the side-by-side gutters).
+        if (_result != null && grid.ColumnDefinitions.Count > 0)
+        {
+            int digits = Math.Max(2, CountDigits(Math.Max(_result.Lines1.Count, _result.Lines2.Count)));
+            double width = Math.Ceiling(digits * _measuredCharWidth) + 14; // 10px right margin + padding
+            if (Math.Abs(grid.ColumnDefinitions[0].Width.Value - width) > 0.5)
+            {
+                grid.ColumnDefinitions[0].Width = new GridLength(width);
+            }
+        }
 
         foreach (var child in grid.Children)
         {

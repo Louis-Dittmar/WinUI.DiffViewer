@@ -107,9 +107,11 @@
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="Auto" />
                                 <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="48" />
+                                <!-- Gutter widths are set from code (digit count x char width),
+                                     so the numbers never clip when zooming. -->
+                                <ColumnDefinition Width="Auto" />
                                 <ColumnDefinition Width="36" />
-                                <ColumnDefinition Width="48" />
+                                <ColumnDefinition Width="Auto" />
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="Auto" />
                             </Grid.ColumnDefinitions>
@@ -143,6 +145,7 @@
                             <!-- Middle strip: both gutters with the connector curves between them -->
                             <Border x:Name="PART_LeftNumbersHost"
                                     Grid.Column="2"
+                                    Width="48"
                                     BorderThickness="1,0,0,0"
                                     BorderBrush="{ThemeResource DiffDividerBrush}"
                                     Background="{ThemeResource DiffGutterBackgroundBrush}">
@@ -168,6 +171,7 @@
 
                             <Border x:Name="PART_RightNumbersHost"
                                     Grid.Column="4"
+                                    Width="48"
                                     BorderThickness="0,0,1,0"
                                     BorderBrush="{ThemeResource DiffDividerBrush}"
                                     Background="{ThemeResource DiffGutterBackgroundBrush}">
