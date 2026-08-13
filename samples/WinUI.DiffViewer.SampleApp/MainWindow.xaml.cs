@@ -52,7 +52,6 @@ public sealed partial class MainWindow : Window
                 "Live Editing" => typeof(LiveEditingPage),
                 "Synchronized Scrolling" => typeof(SyncScrollingPage),
                 "Large Files" => typeof(LargeFilesPage),
-                "Syntax Highlighting" => typeof(SyntaxHighlightingPage),
                 _ => typeof(OverviewPage),
             };
 

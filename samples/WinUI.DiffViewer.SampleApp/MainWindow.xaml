@@ -68,11 +68,6 @@
                         <FontIcon Glyph="&#xE92D;" />
                     </NavigationViewItem.Icon>
                 </NavigationViewItem>
-                <NavigationViewItem Content="Syntax Highlighting">
-                    <NavigationViewItem.Icon>
-                        <FontIcon Glyph="&#xE943;" />
-                    </NavigationViewItem.Icon>
-                </NavigationViewItem>
             </NavigationView.MenuItems>
             <NavigationView.Content>
                 <Frame x:Name="rootFrame"

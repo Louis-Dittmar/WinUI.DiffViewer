@@ -104,10 +104,7 @@ public static class DiffRowBuilder
         return new SideBySideRows(left, right);
     }
 
-    public static IReadOnlyList<DiffRow> BuildUnified(
-        DiffResult result,
-        IReadOnlyList<SyntaxSpan>[]? syntax1 = null,
-        IReadOnlyList<SyntaxSpan>[]? syntax2 = null)
+    public static IReadOnlyList<DiffRow> BuildUnified(DiffResult result)
     {
         var rows = new List<DiffRow>();
 
@@ -118,7 +115,7 @@ public static class DiffRowBuilder
         {
             while (line1 < fragment.StartLine1)
             {
-                rows.Add(UnchangedRow(result.Lines1[line1], line1, line2, syntax1));
+                rows.Add(UnchangedRow(result.Lines1[line1], line1, line2));
                 line1++;
                 line2++;
             }
@@ -134,7 +131,6 @@ public static class DiffRowBuilder
                     Kind = DiffRowKind.Deleted,
                     OldLineNumber = (i + 1).ToString(),
                     Highlights = leftHighlights[i - fragment.StartLine1],
-                    Syntax = SyntaxFor(syntax1, i),
                 });
             }
             for (int i = fragment.StartLine2; i < fragment.EndLine2; i++)
@@ -145,7 +141,6 @@ public static class DiffRowBuilder
                     Kind = DiffRowKind.Inserted,
                     NewLineNumber = (i + 1).ToString(),
                     Highlights = rightHighlights[i - fragment.StartLine2],
-                    Syntax = SyntaxFor(syntax2, i),
                 });
             }
 
@@ -155,7 +150,7 @@ public static class DiffRowBuilder
 
         while (line1 < result.Lines1.Count && line2 < result.Lines2.Count)
         {
-            rows.Add(UnchangedRow(result.Lines1[line1], line1, line2, syntax1));
+            rows.Add(UnchangedRow(result.Lines1[line1], line1, line2));
             line1++;
             line2++;
         }
@@ -163,16 +158,12 @@ public static class DiffRowBuilder
         return rows;
     }
 
-    private static IReadOnlyList<SyntaxSpan> SyntaxFor(IReadOnlyList<SyntaxSpan>[]? syntax, int line)
-        => syntax != null && line < syntax.Length ? syntax[line] : Array.Empty<SyntaxSpan>();
-
-    private static DiffRow UnchangedRow(string text, int line1, int line2, IReadOnlyList<SyntaxSpan>[]? syntax1 = null) => new()
+    private static DiffRow UnchangedRow(string text, int line1, int line2) => new()
     {
         Text = text,
         Kind = DiffRowKind.Unchanged,
         OldLineNumber = (line1 + 1).ToString(),
         NewLineNumber = (line2 + 1).ToString(),
-        Syntax = SyntaxFor(syntax1, line1),
     };
 
     /// <summary>
