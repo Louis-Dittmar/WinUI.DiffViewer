@@ -1,0 +1,58 @@
+<Window
+    x:Class="DiffViewer.Sample.MainWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:dv="using:WinUI.DiffViewer.Controls">
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="200" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <!-- Toolbar -->
+        <StackPanel Orientation="Horizontal" Spacing="12" Padding="12,8">
+            <ComboBox x:Name="ModeBox" Header="View" SelectedIndex="0" SelectionChanged="OnSettingsChanged">
+                <ComboBoxItem Content="Side-by-side" />
+                <ComboBoxItem Content="Unified" />
+            </ComboBox>
+            <ComboBox x:Name="PolicyBox" Header="Ignore Differences" SelectedIndex="0" SelectionChanged="OnSettingsChanged">
+                <ComboBoxItem Content="None" />
+                <ComboBoxItem Content="Trim whitespaces" />
+                <ComboBoxItem Content="Ignore whitespaces" />
+            </ComboBox>
+            <ComboBox x:Name="HighlightBox" Header="Highlighting" SelectedIndex="1" SelectionChanged="OnSettingsChanged">
+                <ComboBoxItem Content="Lines" />
+                <ComboBoxItem Content="Words" />
+                <ComboBoxItem Content="Characters" />
+                <ComboBoxItem Content="None" />
+            </ComboBox>
+            <Button Content="Compare" Click="OnCompareClicked" VerticalAlignment="Bottom" />
+        </StackPanel>
+
+        <!-- Inputs -->
+        <Grid Grid.Row="1" ColumnSpacing="8" Padding="12,0,12,8">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            <TextBox x:Name="OldTextBox"
+                     Header="Old text"
+                     AcceptsReturn="True"
+                     TextWrapping="NoWrap"
+                     FontFamily="Consolas"
+                     ScrollViewer.VerticalScrollBarVisibility="Auto" />
+            <TextBox Grid.Column="1"
+                     x:Name="NewTextBox"
+                     Header="New text"
+                     AcceptsReturn="True"
+                     TextWrapping="NoWrap"
+                     FontFamily="Consolas"
+                     ScrollViewer.VerticalScrollBarVisibility="Auto" />
+        </Grid>
+
+        <!-- The diff viewer control -->
+        <dv:DiffViewer Grid.Row="2" x:Name="Viewer" />
+    </Grid>
+</Window>

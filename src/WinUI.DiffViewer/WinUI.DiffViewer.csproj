@@ -1,0 +1,37 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0-windows10.0.19041.0</TargetFramework>
+    <TargetPlatformMinVersion>10.0.17763.0</TargetPlatformMinVersion>
+    <RootNamespace>WinUI.DiffViewer</RootNamespace>
+    <Platforms>AnyCPU;x86;x64;ARM64</Platforms>
+    <UseWinUI>true</UseWinUI>
+    <Nullable>enable</Nullable>
+    <LangVersion>latest</LangVersion>
+    <ImplicitUsings>disable</ImplicitUsings>
+
+    <!-- NuGet metadata (publish target: GitHub Packages) -->
+    <PackageId>WinUI.DiffViewer</PackageId>
+    <Version>0.2.0</Version>
+    <Authors>Louis Dittmar</Authors>
+    <Description>An editable side-by-side / unified diff viewer control for WinUI 3 in the JetBrains style: both line-number gutters in the middle, connector curves, outer scrollbars, live re-diff while typing. Diff engine ported from JetBrains intellij-community (Apache 2.0).</Description>
+    <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageTags>winui;winui3;diff;diffviewer;compare;merge;windows-app-sdk</PackageTags>
+    <RepositoryType>git</RepositoryType>
+    <RepositoryUrl>https://github.com/Louis-Dittmar/WinUI.DiffViewer</RepositoryUrl>
+    <PackageProjectUrl>https://github.com/Louis-Dittmar/WinUI.DiffViewer</PackageProjectUrl>
+    <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.WindowsAppSDK" Version="2.0.1" />
+    <PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.28000.1839" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\..\README.md" Pack="true" PackagePath="\" />
+    <None Include="..\..\NOTICE" Pack="true" PackagePath="\" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,239 @@
+<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:controls="using:WinUI.DiffViewer.Controls">
+
+    <!-- =============================================================
+         Chrome colors (line numbers, divider, viewer background).
+         Row/word backgrounds are applied from code (DiffPalette) using
+         ActualTheme, so they follow per-element themes, runtime theme
+         switches and high-contrast mode. Apps can override them via
+         Application.Resources keys — see DiffPalette.
+         ============================================================= -->
+    <ResourceDictionary.ThemeDictionaries>
+        <ResourceDictionary x:Key="Light">
+            <SolidColorBrush x:Key="DiffLineNumberBrush" Color="#999999" />
+            <SolidColorBrush x:Key="DiffDividerBrush" Color="#D0D0D0" />
+            <SolidColorBrush x:Key="DiffViewerBackgroundBrush" Color="#FFFFFF" />
+            <SolidColorBrush x:Key="DiffViewerForegroundBrush" Color="#1E1E1E" />
+            <SolidColorBrush x:Key="DiffGutterBackgroundBrush" Color="#F7F7F7" />
+        </ResourceDictionary>
+        <ResourceDictionary x:Key="Default">
+            <SolidColorBrush x:Key="DiffLineNumberBrush" Color="#7F7F7F" />
+            <SolidColorBrush x:Key="DiffDividerBrush" Color="#3F3F3F" />
+            <SolidColorBrush x:Key="DiffViewerBackgroundBrush" Color="#1E1E1E" />
+            <SolidColorBrush x:Key="DiffViewerForegroundBrush" Color="#DCDCDC" />
+            <SolidColorBrush x:Key="DiffGutterBackgroundBrush" Color="#252525" />
+        </ResourceDictionary>
+        <ResourceDictionary x:Key="HighContrast">
+            <SolidColorBrush x:Key="DiffLineNumberBrush" Color="{ThemeResource SystemColorGrayTextColor}" />
+            <SolidColorBrush x:Key="DiffDividerBrush" Color="{ThemeResource SystemColorWindowTextColor}" />
+            <SolidColorBrush x:Key="DiffViewerBackgroundBrush" Color="{ThemeResource SystemColorWindowColor}" />
+            <SolidColorBrush x:Key="DiffViewerForegroundBrush" Color="{ThemeResource SystemColorWindowTextColor}" />
+            <SolidColorBrush x:Key="DiffGutterBackgroundBrush" Color="{ThemeResource SystemColorWindowColor}" />
+        </ResourceDictionary>
+    </ResourceDictionary.ThemeDictionaries>
+
+    <!-- Unified row template. Background and word-highlight brushes are set in
+         code-behind (DiffViewer.StyleUnifiedRow) when rows are prepared. -->
+    <DataTemplate x:Key="DiffUnifiedRowTemplate">
+        <Grid MinHeight="18">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="52" />
+                <ColumnDefinition Width="52" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            <TextBlock Text="{Binding OldLineNumber}"
+                       Foreground="{ThemeResource DiffLineNumberBrush}"
+                       FontFamily="Consolas"
+                       FontSize="13"
+                       TextAlignment="Right"
+                       Margin="0,1,10,1" />
+            <TextBlock Grid.Column="1"
+                       Text="{Binding NewLineNumber}"
+                       Foreground="{ThemeResource DiffLineNumberBrush}"
+                       FontFamily="Consolas"
+                       FontSize="13"
+                       TextAlignment="Right"
+                       Margin="0,1,10,1" />
+            <controls:HighlightableTextBlock Grid.Column="2"
+                                             Text="{Binding Text}"
+                                             Spans="{Binding Highlights}"
+                                             FontFamily="Consolas"
+                                             FontSize="13"
+                                             Margin="0,1,8,1" />
+        </Grid>
+    </DataTemplate>
+
+    <!-- HighlightableTextBlock -->
+    <Style TargetType="controls:HighlightableTextBlock">
+        <Setter Property="IsTabStop" Value="False" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="controls:HighlightableTextBlock">
+                    <TextBlock x:Name="PART_Text"
+                               FontFamily="{TemplateBinding FontFamily}"
+                               FontSize="{TemplateBinding FontSize}"
+                               Foreground="{TemplateBinding Foreground}"
+                               IsTextSelectionEnabled="True"
+                               TextWrapping="NoWrap" />
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- DiffViewer -->
+    <Style TargetType="controls:DiffViewer">
+        <Setter Property="IsTabStop" Value="False" />
+        <Setter Property="Background" Value="{ThemeResource DiffViewerBackgroundBrush}" />
+        <Setter Property="Foreground" Value="{ThemeResource DiffViewerForegroundBrush}" />
+        <Setter Property="FontFamily" Value="Consolas" />
+        <Setter Property="FontSize" Value="13" />
+        <Setter Property="HorizontalAlignment" Value="Stretch" />
+        <Setter Property="VerticalAlignment" Value="Stretch" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="controls:DiffViewer">
+                    <Grid Background="{TemplateBinding Background}">
+
+                        <!-- Side-by-side mode, IntelliJ layout:
+                             scrollbar | editor | numbers • curves • numbers | editor | scrollbar -->
+                        <Grid x:Name="PART_SideBySideRoot">
+                            <Grid.Resources>
+                                <!-- Editors sit on top of the highlight canvases —
+                                     keep every TextBox background state transparent. -->
+                                <SolidColorBrush x:Key="TextControlBackground" Color="Transparent" />
+                                <SolidColorBrush x:Key="TextControlBackgroundPointerOver" Color="Transparent" />
+                                <SolidColorBrush x:Key="TextControlBackgroundFocused" Color="Transparent" />
+                                <SolidColorBrush x:Key="TextControlBackgroundDisabled" Color="Transparent" />
+                                <SolidColorBrush x:Key="TextControlBorderBrush" Color="Transparent" />
+                                <SolidColorBrush x:Key="TextControlBorderBrushPointerOver" Color="Transparent" />
+                                <SolidColorBrush x:Key="TextControlBorderBrushFocused" Color="Transparent" />
+                                <SolidColorBrush x:Key="TextControlBorderBrushDisabled" Color="Transparent" />
+                            </Grid.Resources>
+
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="48" />
+                                <ColumnDefinition Width="36" />
+                                <ColumnDefinition Width="48" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+
+                            <!-- Outer scrollbar of the LEFT pane (far left, like IntelliJ) -->
+                            <ScrollBar x:Name="PART_LeftScrollBar"
+                                       Grid.Column="0"
+                                       Orientation="Vertical"
+                                       IndicatorMode="MouseIndicator" />
+
+                            <!-- Left editor with its highlight layer behind it -->
+                            <Grid Grid.Column="1">
+                                <Border x:Name="PART_LeftHighlightHost" IsHitTestVisible="False">
+                                    <Canvas x:Name="PART_LeftHighlights" />
+                                </Border>
+                                <TextBox x:Name="PART_LeftEditor"
+                                         AcceptsReturn="True"
+                                         TextWrapping="NoWrap"
+                                         IsSpellCheckEnabled="False"
+                                         IsTextPredictionEnabled="False"
+                                         Background="Transparent"
+                                         BorderThickness="0"
+                                         CornerRadius="0"
+                                         Padding="10,6,10,6"
+                                         FontFamily="{TemplateBinding FontFamily}"
+                                         FontSize="{TemplateBinding FontSize}"
+                                         ScrollViewer.VerticalScrollBarVisibility="Hidden"
+                                         ScrollViewer.HorizontalScrollBarVisibility="Auto" />
+                            </Grid>
+
+                            <!-- Middle strip: both gutters with the connector curves between them -->
+                            <Border x:Name="PART_LeftNumbersHost"
+                                    Grid.Column="2"
+                                    BorderThickness="1,0,0,0"
+                                    BorderBrush="{ThemeResource DiffDividerBrush}"
+                                    Background="{ThemeResource DiffGutterBackgroundBrush}">
+                                <Grid>
+                                    <Canvas x:Name="PART_LeftGutterHighlights" IsHitTestVisible="False" />
+                                    <Canvas>
+                                        <TextBlock x:Name="PART_LeftNumbers"
+                                                   Width="40"
+                                                   Canvas.Left="2"
+                                                   TextAlignment="Right"
+                                                   FontFamily="{TemplateBinding FontFamily}"
+                                                   FontSize="{TemplateBinding FontSize}"
+                                                   Foreground="{ThemeResource DiffLineNumberBrush}" />
+                                    </Canvas>
+                                </Grid>
+                            </Border>
+
+                            <Border x:Name="PART_ConnectorHost"
+                                    Grid.Column="3"
+                                    Background="{ThemeResource DiffGutterBackgroundBrush}">
+                                <Canvas x:Name="PART_Connector" IsHitTestVisible="False" />
+                            </Border>
+
+                            <Border x:Name="PART_RightNumbersHost"
+                                    Grid.Column="4"
+                                    BorderThickness="0,0,1,0"
+                                    BorderBrush="{ThemeResource DiffDividerBrush}"
+                                    Background="{ThemeResource DiffGutterBackgroundBrush}">
+                                <Grid>
+                                    <Canvas x:Name="PART_RightGutterHighlights" IsHitTestVisible="False" />
+                                    <Canvas>
+                                        <TextBlock x:Name="PART_RightNumbers"
+                                                   Width="40"
+                                                   Canvas.Left="2"
+                                                   TextAlignment="Right"
+                                                   FontFamily="{TemplateBinding FontFamily}"
+                                                   FontSize="{TemplateBinding FontSize}"
+                                                   Foreground="{ThemeResource DiffLineNumberBrush}" />
+                                    </Canvas>
+                                </Grid>
+                            </Border>
+
+                            <!-- Right editor with its highlight layer behind it -->
+                            <Grid Grid.Column="5">
+                                <Border x:Name="PART_RightHighlightHost" IsHitTestVisible="False">
+                                    <Canvas x:Name="PART_RightHighlights" />
+                                </Border>
+                                <TextBox x:Name="PART_RightEditor"
+                                         AcceptsReturn="True"
+                                         TextWrapping="NoWrap"
+                                         IsSpellCheckEnabled="False"
+                                         IsTextPredictionEnabled="False"
+                                         Background="Transparent"
+                                         BorderThickness="0"
+                                         CornerRadius="0"
+                                         Padding="10,6,10,6"
+                                         FontFamily="{TemplateBinding FontFamily}"
+                                         FontSize="{TemplateBinding FontSize}"
+                                         ScrollViewer.VerticalScrollBarVisibility="Hidden"
+                                         ScrollViewer.HorizontalScrollBarVisibility="Auto" />
+                            </Grid>
+
+                            <!-- Outer scrollbar of the RIGHT pane (far right) -->
+                            <ScrollBar x:Name="PART_RightScrollBar"
+                                       Grid.Column="6"
+                                       Orientation="Vertical"
+                                       IndicatorMode="MouseIndicator" />
+                        </Grid>
+
+                        <!-- Unified mode -->
+                        <ScrollViewer x:Name="PART_UnifiedScrollViewer"
+                                      Visibility="Collapsed"
+                                      HorizontalScrollBarVisibility="Auto"
+                                      VerticalScrollBarVisibility="Auto"
+                                      HorizontalScrollMode="Enabled"
+                                      VerticalScrollMode="Enabled">
+                            <ItemsRepeater x:Name="PART_UnifiedRepeater"
+                                           ItemTemplate="{StaticResource DiffUnifiedRowTemplate}" />
+                        </ScrollViewer>
+                    </Grid>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+</ResourceDictionary>

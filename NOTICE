@@ -1,0 +1,41 @@
+WinUI.DiffViewer
+================
+
+This product contains code derived from and translated from the IntelliJ
+Community Edition ("intellij-community") project:
+
+    Copyright 2000-2025 JetBrains s.r.o. and contributors.
+    Licensed under the Apache License, Version 2.0.
+    https://github.com/JetBrains/intellij-community
+
+The following portions are ports/translations (Kotlin/Java -> C#) of files
+from that project (see the header comment of each C# file for the exact
+original path):
+
+  - src/WinUI.DiffViewer/Core/MyersLcs.cs
+      from platform/util/diff/src/com/intellij/util/diff/MyersLCS.kt
+  - src/WinUI.DiffViewer/Core/DiffBitSet.cs
+      from platform/util/diff/src/com/intellij/util/diff/BitSet.kt
+  - src/WinUI.DiffViewer/Core/DiffAlgorithm.cs
+      from platform/util/diff/src/com/intellij/util/diff/Diff.kt and
+      platform/util/diff/src/com/intellij/diff/comparison/iterables/DiffIterableUtil.kt
+  - src/WinUI.DiffViewer/Core/TextUtil.cs
+      from platform/util/diff/src/com/intellij/diff/comparison/TrimUtil.kt,
+      ComparisonUtil.kt and CharacterUtils.kt
+  - src/WinUI.DiffViewer/Core/LineComparator.cs
+      from platform/util/diff/src/com/intellij/diff/comparison/ByLineRt.kt
+  - src/WinUI.DiffViewer/Core/WordComparator.cs
+      from platform/util/diff/src/com/intellij/diff/comparison/ByWordRt.kt
+  - src/WinUI.DiffViewer/Core/CharComparator.cs
+      from platform/util/diff/src/com/intellij/diff/comparison/ByCharRt.kt
+  - src/WinUI.DiffViewer/Core/DiffRange.cs
+      from platform/util/diff/src/com/intellij/diff/util/Range.kt
+  - src/WinUI.DiffViewer/Core/DiffFragment.cs
+      from platform/util/diff/src/com/intellij/diff/fragments/DiffFragment.kt
+      and LineFragment.kt
+
+The UI layer (Controls/, Model/, Themes/) is an original work modeled after
+the behavior and visual design of IntelliJ's diff viewer
+(platform/diff-impl), and after the project structure of WinUI.TableView
+(https://github.com/w-ahmad/WinUI.TableView, MIT license — structure only,
+no code was copied from it).

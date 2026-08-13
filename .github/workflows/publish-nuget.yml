@@ -1,0 +1,34 @@
+# Veröffentlicht das NuGet-Paket in GitHub Packages.
+# Läuft bei jedem Tag "v*" (z. B. v0.2.0) oder manuell über "Run workflow".
+# Voraussetzung: dieser Ordner (WinUI.DiffViewer) ist die Wurzel eines eigenen
+# GitHub-Repositories (z. B. Louis-Dittmar/WinUI.DiffViewer).
+
+name: Publish NuGet (GitHub Packages)
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+jobs:
+  pack-and-publish:
+    runs-on: windows-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Pack
+        run: dotnet pack src/WinUI.DiffViewer/WinUI.DiffViewer.csproj -c Release -o out
+
+      - name: Push to GitHub Packages
+        run: >
+          dotnet nuget push "out/*.nupkg"
+          --source "https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json"
+          --api-key ${{ secrets.GITHUB_TOKEN }}
+          --skip-duplicate
