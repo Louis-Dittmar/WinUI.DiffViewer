@@ -10,7 +10,7 @@
 
     <Grid>
         <controls:SamplePresenter Header="Live Editing"
-                                  Description="In side-by-side mode both panes are real, editable text boxes. Type into either side — the edit updates OldText/NewText and the diff is re-computed live (debounced, latest-wins). Every finished recomputation raises DiffComputed.">
+                                  Description="In side-by-side mode both panes are real, editable text boxes. Type into either side — the edit updates OldText/NewText and the diff is re-computed live (debounced, latest-wins). Every finished recomputation raises DiffComputed. The sample shows this library's own LineComparator.cs before and after the ChunkOptimizer port.">
             <controls:SamplePresenter.Example>
                 <dv:DiffViewer x:Name="viewer" />
             </controls:SamplePresenter.Example>

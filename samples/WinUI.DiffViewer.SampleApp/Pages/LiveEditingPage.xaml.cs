@@ -16,8 +16,8 @@ public sealed partial class LiveEditingPage : Page
         EditorSettings.Apply(viewer);
         eventLog.ItemsSource = _log;
         viewer.DiffComputed += OnDiffComputed;
-        viewer.OldText = DemoContent.OldCode;
-        viewer.NewText = DemoContent.NewCode;
+        viewer.OldText = DemoContent.OldLineComparator;
+        viewer.NewText = DemoContent.NewLineComparator;
     }
 
     private void OnDiffComputed(object? sender, EventArgs e)
@@ -32,7 +32,7 @@ public sealed partial class LiveEditingPage : Page
 
     private void OnResetClicked(object sender, RoutedEventArgs e)
     {
-        viewer.OldText = DemoContent.OldCode;
-        viewer.NewText = DemoContent.NewCode;
+        viewer.OldText = DemoContent.OldLineComparator;
+        viewer.NewText = DemoContent.NewLineComparator;
     }
 }
