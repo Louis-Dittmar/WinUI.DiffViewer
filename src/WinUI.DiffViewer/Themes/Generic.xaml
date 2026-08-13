@@ -51,6 +51,7 @@
             <controls:HighlightableTextBlock Grid.Column="1"
                                              Text="{Binding Text}"
                                              Spans="{Binding Highlights}"
+                                             SyntaxSpans="{Binding Syntax}"
                                              FontFamily="Consolas"
                                              FontSize="13"
                                              Margin="0,1,8,1" />

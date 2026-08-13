@@ -226,6 +226,22 @@ public sealed class DiffViewer : Control
         set => SetValue(SynchronizeScrollingProperty, value);
     }
 
+    public static readonly DependencyProperty LanguageModeProperty = DependencyProperty.Register(
+        nameof(LanguageMode), typeof(SyntaxLanguage), typeof(DiffViewer),
+        new PropertyMetadata(SyntaxLanguage.Auto, OnDiffInputChanged));
+
+    /// <summary>
+    /// Language for syntax highlighting in the unified view (Auto detects from
+    /// the content). The editable side-by-side panes are plain TextBoxes and
+    /// cannot render multi-colored text — IntelliJ gets this for free from
+    /// real editor instances.
+    /// </summary>
+    public SyntaxLanguage LanguageMode
+    {
+        get => (SyntaxLanguage)GetValue(LanguageModeProperty);
+        set => SetValue(LanguageModeProperty, value);
+    }
+
     /// <summary>Raised after a recomputation finished and the view was updated.</summary>
     public event EventHandler? DiffComputed;
 
@@ -516,6 +532,7 @@ public sealed class DiffViewer : Control
             HighlightMode = HighlightMode,
         };
         var mode = ViewMode;
+        var language = LanguageMode;
 
         DiffResult? result = null;
         int[]? starts1 = null;
@@ -531,7 +548,19 @@ public sealed class DiffViewer : Control
                 starts2 = BuildLineStarts(result.Lines2);
                 if (mode == DiffViewMode.Unified)
                 {
-                    unifiedRows = DiffRowBuilder.BuildUnified(result);
+                    var resolved = language == SyntaxLanguage.Auto
+                        ? SyntaxHighlighter.Detect(oldText, newText)
+                        : language;
+
+                    IReadOnlyList<SyntaxSpan>[]? syntax1 = null;
+                    IReadOnlyList<SyntaxSpan>[]? syntax2 = null;
+                    if (resolved is not SyntaxLanguage.None and not SyntaxLanguage.Auto)
+                    {
+                        syntax1 = SyntaxHighlighter.HighlightLines(result.Lines1, resolved);
+                        syntax2 = SyntaxHighlighter.HighlightLines(result.Lines2, resolved);
+                    }
+
+                    unifiedRows = DiffRowBuilder.BuildUnified(result, syntax1, syntax2);
                 }
             });
         }

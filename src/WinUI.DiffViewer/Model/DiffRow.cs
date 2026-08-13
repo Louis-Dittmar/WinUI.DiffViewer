@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using WinUI.DiffViewer.Core;
 
 namespace WinUI.DiffViewer.Model;
 
@@ -45,6 +46,9 @@ public sealed class DiffRow
 
     /// <summary>Word/char highlight spans inside <see cref="Text"/>.</summary>
     public IReadOnlyList<HighlightSpan> Highlights { get; init; } = System.Array.Empty<HighlightSpan>();
+
+    /// <summary>Syntax token spans inside <see cref="Text"/> (empty when highlighting is off).</summary>
+    public IReadOnlyList<SyntaxSpan> Syntax { get; init; } = System.Array.Empty<SyntaxSpan>();
 
     /// <summary>
     /// The single line number shown in unified mode: deleted rows keep their

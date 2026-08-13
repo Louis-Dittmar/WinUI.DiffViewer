@@ -1,6 +1,7 @@
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Media;
 using Windows.UI;
+using WinUI.DiffViewer.Core;
 using WinUI.DiffViewer.Model;
 
 namespace WinUI.DiffViewer.Controls;
@@ -95,4 +96,40 @@ internal static class DiffPalette
     };
 
     private static Color Rgb(byte r, byte g, byte b) => Color.FromArgb(0xFF, r, g, b);
+
+    /// <summary>
+    /// Foreground brush for a syntax token class. Colors follow IntelliJ's
+    /// default light scheme / Darcula. Overridable via Application.Resources
+    /// keys "DiffSyntaxKeywordBrush", "DiffSyntaxStringBrush",
+    /// "DiffSyntaxCommentBrush", "DiffSyntaxNumberBrush". Returns null in
+    /// high-contrast mode so system colors stay in charge.
+    /// </summary>
+    internal static Brush? GetSyntaxBrush(SyntaxKind kind, ElementTheme theme, bool highContrast)
+    {
+        string key = kind switch
+        {
+            SyntaxKind.Keyword => "DiffSyntaxKeywordBrush",
+            SyntaxKind.String => "DiffSyntaxStringBrush",
+            SyntaxKind.Comment => "DiffSyntaxCommentBrush",
+            _ => "DiffSyntaxNumberBrush",
+        };
+
+        var app = Application.Current;
+        if (app != null && app.Resources.TryGetValue(key, out object resource) && resource is Brush brush)
+        {
+            return brush;
+        }
+
+        if (highContrast) return null;
+
+        bool dark = theme == ElementTheme.Dark;
+        Color color = kind switch
+        {
+            SyntaxKind.Keyword => dark ? Rgb(0xCC, 0x78, 0x32) : Rgb(0x00, 0x00, 0x80),
+            SyntaxKind.String => dark ? Rgb(0x6A, 0x87, 0x59) : Rgb(0x06, 0x7D, 0x17),
+            SyntaxKind.Comment => dark ? Rgb(0x80, 0x80, 0x80) : Rgb(0x8C, 0x8C, 0x8C),
+            _ => dark ? Rgb(0x68, 0x97, 0xBB) : Rgb(0x17, 0x50, 0xEB),
+        };
+        return new SolidColorBrush(color);
+    }
 }
