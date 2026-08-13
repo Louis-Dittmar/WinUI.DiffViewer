@@ -8,6 +8,7 @@ public sealed partial class SyncScrollingPage : Page
     {
         InitializeComponent();
 
+        EditorSettings.Apply(viewer);
         var (oldText, newText) = DemoContent.BuildSyncScrollDemo();
         viewer.OldText = oldText;
         viewer.NewText = newText;

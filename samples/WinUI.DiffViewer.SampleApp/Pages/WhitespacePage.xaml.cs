@@ -8,6 +8,7 @@ public sealed partial class WhitespacePage : Page
     {
         InitializeComponent();
 
+        EditorSettings.Apply(viewer);
         viewer.OldText = DemoContent.OldWhitespace;
         viewer.NewText = DemoContent.NewWhitespace;
     }

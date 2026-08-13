@@ -13,6 +13,7 @@ public sealed partial class LargeFilesPage : Page
     {
         InitializeComponent();
 
+        EditorSettings.Apply(viewer);
         viewer.DiffComputed += OnDiffComputed;
         viewer.DiffFailed += OnDiffFailed;
         GenerateAndCompare(1000);

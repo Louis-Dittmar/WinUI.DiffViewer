@@ -8,6 +8,7 @@ public sealed partial class HighlightingPage : Page
     {
         InitializeComponent();
 
+        EditorSettings.Apply(viewer);
         viewer.OldText = DemoContent.OldProse;
         viewer.NewText = DemoContent.NewProse;
     }

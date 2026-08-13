@@ -26,6 +26,16 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!-- JetBrains Mono (SIL Open Font License, see Assets/Fonts/OFL.txt) -->
+    <Content Include="Assets\Fonts\*.ttf">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Assets\Fonts\OFL.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\..\src\WinUI.DiffViewer\WinUI.DiffViewer.csproj" />
   </ItemGroup>
 

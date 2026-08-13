@@ -13,6 +13,7 @@ public sealed partial class LiveEditingPage : Page
     {
         InitializeComponent();
 
+        EditorSettings.Apply(viewer);
         eventLog.ItemsSource = _log;
         viewer.DiffComputed += OnDiffComputed;
         viewer.OldText = DemoContent.OldCode;

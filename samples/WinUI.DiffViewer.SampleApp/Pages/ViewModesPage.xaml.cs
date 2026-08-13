@@ -9,6 +9,7 @@ public sealed partial class ViewModesPage : Page
     {
         InitializeComponent();
 
+        EditorSettings.Apply(viewer);
         viewer.OldText = DemoContent.OldCode;
         viewer.NewText = DemoContent.NewCode;
         modeButtons.SelectedIndex = viewer.ViewMode == DiffViewMode.SideBySide ? 0 : 1;

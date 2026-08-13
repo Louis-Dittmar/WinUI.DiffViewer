@@ -87,6 +87,72 @@
                     </Grid>
                 </Border>
 
+                <!--  Editor  -->
+                <TextBlock Style="{StaticResource SettingsSectionHeaderTextBlockStyle}"
+                           Text="Editor" />
+                <Border Style="{StaticResource SettingsCardBorderStyle}">
+                    <Grid ColumnSpacing="16">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+
+                        <FontIcon Glyph="&#xE8D2;"
+                                  VerticalAlignment="Center" />
+                        <StackPanel Grid.Column="1"
+                                    VerticalAlignment="Center">
+                            <TextBlock Text="Editor font" />
+                            <TextBlock Text="Applied to the diff viewers on newly opened sample pages"
+                                       TextWrapping="Wrap"
+                                       Style="{StaticResource CaptionTextBlockStyle}"
+                                       Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                        </StackPanel>
+                        <ComboBox x:Name="editorFont"
+                                  Grid.Column="2"
+                                  MinWidth="180"
+                                  VerticalAlignment="Center"
+                                  SelectionChanged="OnEditorFontSelectionChanged">
+                            <ComboBoxItem Content="Consolas"
+                                          Tag="Consolas" />
+                            <ComboBoxItem Content="Cascadia Mono"
+                                          Tag="Cascadia Mono" />
+                            <ComboBoxItem Content="Cascadia Code"
+                                          Tag="Cascadia Code" />
+                            <ComboBoxItem Content="JetBrains Mono"
+                                          Tag="ms-appx:///Assets/Fonts/JetBrainsMono-Regular.ttf#JetBrains Mono" />
+                        </ComboBox>
+                    </Grid>
+                </Border>
+                <Border Style="{StaticResource SettingsCardBorderStyle}">
+                    <Grid ColumnSpacing="16">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+
+                        <FontIcon Glyph="&#xE8E9;"
+                                  VerticalAlignment="Center" />
+                        <StackPanel Grid.Column="1"
+                                    VerticalAlignment="Center">
+                            <TextBlock Text="Editor font size" />
+                            <TextBlock Text="Ctrl + mouse wheel additionally zooms any diff viewer directly"
+                                       TextWrapping="Wrap"
+                                       Style="{StaticResource CaptionTextBlockStyle}"
+                                       Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                        </StackPanel>
+                        <NumberBox x:Name="editorFontSize"
+                                   Grid.Column="2"
+                                   Minimum="8"
+                                   Maximum="40"
+                                   SmallChange="1"
+                                   SpinButtonPlacementMode="Inline"
+                                   VerticalAlignment="Center"
+                                   ValueChanged="OnEditorFontSizeChanged" />
+                    </Grid>
+                </Border>
+
                 <!--  About  -->
                 <TextBlock Style="{StaticResource SettingsSectionHeaderTextBlockStyle}"
                            Text="About" />

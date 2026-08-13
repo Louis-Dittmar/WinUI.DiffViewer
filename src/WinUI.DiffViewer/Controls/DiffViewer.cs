@@ -11,12 +11,15 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.UI.Dispatching;
+using Microsoft.UI.Input;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Controls.Primitives;
+using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Shapes;
 using Windows.Foundation;
+using Windows.UI.Core;
 using Windows.UI.ViewManagement;
 using WinUI.DiffViewer.Core;
 using WinUI.DiffViewer.Model;
@@ -118,6 +121,40 @@ public sealed class DiffViewer : Control
             RestyleUnifiedRows();
             RedrawSideBySide();
         };
+
+        // Font changes invalidate the measured char/line metrics that all
+        // highlight geometry is based on.
+        RegisterPropertyChangedCallback(FontFamilyProperty, (_, _) => OnFontChanged());
+        RegisterPropertyChangedCallback(FontSizeProperty, (_, _) => OnFontChanged());
+
+        // IDE-style zoom: Ctrl + mouse wheel changes the editor font size.
+        // handledEventsToo — the editors' inner ScrollViewers swallow wheel
+        // events before they would bubble here.
+        AddHandler(PointerWheelChangedEvent, new PointerEventHandler(OnPointerWheelZoom), handledEventsToo: true);
+    }
+
+    private void OnFontChanged()
+    {
+        _metricsMeasured = false;
+        MeasureMetrics();
+        RestyleUnifiedRows();
+        RedrawSideBySide();
+    }
+
+    private void OnPointerWheelZoom(object sender, PointerRoutedEventArgs e)
+    {
+        var ctrl = InputKeyboardSource.GetKeyStateForCurrentThread(Windows.System.VirtualKey.Control);
+        if (!ctrl.HasFlag(CoreVirtualKeyStates.Down)) return;
+
+        int delta = e.GetCurrentPoint(this).Properties.MouseWheelDelta;
+        if (delta == 0) return;
+
+        double newSize = Math.Clamp(FontSize + (delta > 0 ? 1 : -1), 8, 40);
+        if (Math.Abs(newSize - FontSize) > 0.01)
+        {
+            FontSize = newSize;
+        }
+        e.Handled = true;
     }
 
     // -----------------------------------------------------------------
@@ -978,6 +1015,13 @@ public sealed class DiffViewer : Control
             if (child is HighlightableTextBlock highlightable)
             {
                 highlightable.HighlightBrush = DiffPalette.GetWordBrush(row.Kind, ActualTheme, highContrast);
+                highlightable.FontFamily = FontFamily;
+                highlightable.FontSize = FontSize;
+            }
+            else if (child is TextBlock textBlock)
+            {
+                textBlock.FontFamily = FontFamily;
+                textBlock.FontSize = FontSize;
             }
         }
     }
