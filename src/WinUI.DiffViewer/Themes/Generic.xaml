@@ -163,10 +163,13 @@
                                 </Grid>
                             </Border>
 
+                            <!-- Hit-testing stays enabled: the canvas hosts the
+                                 apply-change buttons; the curve paths themselves
+                                 are made hit-test-invisible in code. -->
                             <Border x:Name="PART_ConnectorHost"
                                     Grid.Column="3"
                                     Background="{ThemeResource DiffGutterBackgroundBrush}">
-                                <Canvas x:Name="PART_Connector" IsHitTestVisible="False" />
+                                <Canvas x:Name="PART_Connector" />
                             </Border>
 
                             <Border x:Name="PART_RightNumbersHost"

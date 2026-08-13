@@ -11,7 +11,7 @@
 
     <Grid>
         <controls:SamplePresenter Header="Overview"
-                                  Description="An editable side-by-side / unified diff viewer for WinUI 3 in the JetBrains style: both line-number gutters in the middle, connector curves, and live re-diff while typing. Set OldText and NewText — the diff is computed on a background thread.">
+                                  Description="An editable side-by-side / unified diff viewer for WinUI 3 in the JetBrains style: both line-number gutters in the middle, connector curves, and live re-diff while typing. The chevrons in the divider copy a block to the other side; Ctrl+mouse wheel zooms. Set OldText and NewText — the diff is computed on a background thread.">
             <controls:SamplePresenter.Example>
                 <dv:DiffViewer x:Name="viewer" />
             </controls:SamplePresenter.Example>
@@ -31,6 +31,8 @@
                               SelectedItem="{Binding IgnorePolicy, Mode=TwoWay, ElementName=viewer}" />
                     <ToggleSwitch Header="Synchronize scrolling"
                                   IsOn="{Binding SynchronizeScrolling, Mode=TwoWay, ElementName=viewer}" />
+                    <ToggleSwitch Header="Apply buttons"
+                                  IsOn="{Binding ShowApplyButtons, Mode=TwoWay, ElementName=viewer}" />
                 </StackPanel>
             </controls:SamplePresenter.Options>
             <controls:SamplePresenter.Xaml>
@@ -39,7 +41,8 @@
     ViewMode="$(ViewMode)"
     HighlightMode="$(HighlightMode)"
     IgnorePolicy="$(IgnorePolicy)"
-    SynchronizeScrolling="$(SynchronizeScrolling)" /&gt;
+    SynchronizeScrolling="$(SynchronizeScrolling)"
+    ShowApplyButtons="$(ShowApplyButtons)" /&gt;
                 </x:String>
             </controls:SamplePresenter.Xaml>
             <controls:SamplePresenter.CSharp>
@@ -58,6 +61,8 @@ viewer.NewText = File.ReadAllText("after.cs");
                                            Value="{x:Bind viewer.IgnorePolicy, Mode=OneWay}" />
                 <controls:CodeSubstitution Key="SynchronizeScrolling"
                                            Value="{x:Bind viewer.SynchronizeScrolling, Mode=OneWay}" />
+                <controls:CodeSubstitution Key="ShowApplyButtons"
+                                           Value="{x:Bind viewer.ShowApplyButtons, Mode=OneWay}" />
             </controls:SamplePresenter.Substitutions>
         </controls:SamplePresenter>
     </Grid>

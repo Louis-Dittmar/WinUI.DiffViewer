@@ -226,6 +226,21 @@ public sealed class DiffViewer : Control
         set => SetValue(SynchronizeScrollingProperty, value);
     }
 
+    public static readonly DependencyProperty ShowApplyButtonsProperty = DependencyProperty.Register(
+        nameof(ShowApplyButtons), typeof(bool), typeof(DiffViewer),
+        new PropertyMetadata(true, (d, _) => ((DiffViewer)d).RedrawSideBySide()));
+
+    /// <summary>
+    /// Shows per-change chevron buttons in the divider that copy the block to
+    /// the other side (IntelliJ's accept/revert arrows): "&gt;" applies the
+    /// left version to the right, "&lt;" the right version to the left.
+    /// </summary>
+    public bool ShowApplyButtons
+    {
+        get => (bool)GetValue(ShowApplyButtonsProperty);
+        set => SetValue(ShowApplyButtonsProperty, value);
+    }
+
     /// <summary>Raised after a recomputation finished and the view was updated.</summary>
     public event EventHandler? DiffComputed;
 
@@ -1000,8 +1015,77 @@ public sealed class DiffViewer : Control
 
             var geometry = new PathGeometry();
             geometry.Figures.Add(figure);
-            canvas.Children.Add(new Path { Data = geometry, Fill = fill });
+            canvas.Children.Add(new Path { Data = geometry, Fill = fill, IsHitTestVisible = false });
+
+            if (ShowApplyButtons)
+            {
+                // IntelliJ-style accept arrows: ">" copies the left block to the
+                // right side, "<" the right block to the left side.
+                AddApplyButton(canvas, fragment, toRight: true, x: 1, y: lTop, height);
+                AddApplyButton(canvas, fragment, toRight: false, x: width - 17, y: rTop, height);
+            }
         }
+    }
+
+    private void AddApplyButton(Canvas canvas, LineFragment fragment, bool toRight, double x, double y, double viewportHeight)
+    {
+        if (y < -8 || y > viewportHeight - 4) return;
+
+        var button = new Button
+        {
+            Width = 16,
+            Height = 16,
+            Padding = new Thickness(0),
+            BorderThickness = new Thickness(0),
+            Background = new SolidColorBrush(Microsoft.UI.Colors.Transparent),
+            CornerRadius = new CornerRadius(2),
+            Content = new FontIcon
+            {
+                Glyph = toRight ? "\uE76C" : "\uE76B", // ChevronRight / ChevronLeft
+                FontSize = 9,
+            },
+        };
+        ToolTipService.SetToolTip(button, toRight
+            ? "Accept left side (copy this block to the right)"
+            : "Accept right side (copy this block to the left)");
+        button.Click += (_, _) => ApplyChange(fragment, toRight);
+
+        Canvas.SetLeft(button, x);
+        Canvas.SetTop(button, Math.Max(0, y));
+        canvas.Children.Add(button);
+    }
+
+    /// <summary>
+    /// Replaces the target-side lines of <paramref name="fragment"/> with the
+    /// source-side lines (the divider chevrons — IntelliJ's per-change
+    /// accept/revert). The text update triggers a normal re-diff.
+    /// </summary>
+    private void ApplyChange(LineFragment fragment, bool toRight)
+    {
+        var result = _result;
+        if (result == null) return;
+
+        var sourceLines = toRight ? result.Lines1 : result.Lines2;
+        var targetLines = toRight ? result.Lines2 : result.Lines1;
+        int sourceStart = toRight ? fragment.StartLine1 : fragment.StartLine2;
+        int sourceEnd = toRight ? fragment.EndLine1 : fragment.EndLine2;
+        int targetStart = toRight ? fragment.StartLine2 : fragment.StartLine1;
+        int targetEnd = toRight ? fragment.EndLine2 : fragment.EndLine1;
+
+        if (targetStart > targetLines.Count || targetEnd > targetLines.Count ||
+            sourceStart > sourceLines.Count || sourceEnd > sourceLines.Count)
+        {
+            return; // stale fragment (text changed since the last recompute)
+        }
+
+        var newLines = new List<string>(targetLines.Count + (sourceEnd - sourceStart));
+        for (int i = 0; i < targetStart; i++) newLines.Add(targetLines[i]);
+        for (int i = sourceStart; i < sourceEnd; i++) newLines.Add(sourceLines[i]);
+        for (int i = targetEnd; i < targetLines.Count; i++) newLines.Add(targetLines[i]);
+
+        string newText = string.Join('\n', newLines);
+        if (toRight) NewText = newText;
+        else OldText = newText;
     }
 
     private static DiffRowKind RowKindFor(LineFragmentType type, bool side1) => type switch
