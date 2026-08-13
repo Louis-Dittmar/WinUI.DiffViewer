@@ -1,0 +1,23 @@
+# Baut Library + SampleApp bei jedem Push/PR auf main (Vorbild: WinUI.TableView ci-build).
+
+name: CI Build
+
+on:
+  push:
+    branches: ['main']
+  pull_request:
+    branches: ['main']
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Build solution (library + sample app)
+        run: dotnet build WinUI.DiffViewer.sln -c Release

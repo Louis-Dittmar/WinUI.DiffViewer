@@ -1,0 +1,38 @@
+<Page x:Class="WinUI.DiffViewer.SampleApp.Pages.WhitespacePage"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:local="using:WinUI.DiffViewer.SampleApp"
+      xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+      xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+      xmlns:dv="using:WinUI.DiffViewer.Controls"
+      xmlns:core="using:WinUI.DiffViewer.Core"
+      xmlns:controls="using:WinUI.DiffViewer.SampleApp.Controls"
+      mc:Ignorable="d">
+
+    <Grid>
+        <controls:SamplePresenter Header="Whitespace Handling"
+                                  Description="IntelliJ's 'Ignore Differences' setting. The two sides differ mostly in formatting — with TrimWhitespaces or IgnoreWhitespaces only the one real change (the added '!') remains highlighted.">
+            <controls:SamplePresenter.Example>
+                <dv:DiffViewer x:Name="viewer" />
+            </controls:SamplePresenter.Example>
+            <controls:SamplePresenter.Options>
+                <StackPanel Spacing="16">
+                    <ComboBox Header="Ignore differences"
+                              HorizontalAlignment="Stretch"
+                              ItemsSource="{local:EnumValues Type=core:ComparisonPolicy}"
+                              SelectedItem="{Binding IgnorePolicy, Mode=TwoWay, ElementName=viewer}" />
+                </StackPanel>
+            </controls:SamplePresenter.Options>
+            <controls:SamplePresenter.Xaml>
+                <x:String xml:space="preserve">
+&lt;dv:DiffViewer x:Name="viewer"
+    IgnorePolicy="$(IgnorePolicy)" /&gt;
+                </x:String>
+            </controls:SamplePresenter.Xaml>
+            <controls:SamplePresenter.Substitutions>
+                <controls:CodeSubstitution Key="IgnorePolicy"
+                                           Value="{x:Bind viewer.IgnorePolicy, Mode=OneWay}" />
+            </controls:SamplePresenter.Substitutions>
+        </controls:SamplePresenter>
+    </Grid>
+</Page>

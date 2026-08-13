@@ -60,9 +60,29 @@ src/WinUI.DiffViewer/
   Model/       Zeilenmodell: DiffRow, DiffRowBuilder (Ausrichtung, Highlight-Spans)
   Controls/    DiffViewer (Templated Control), HighlightableTextBlock, Konverter
   Themes/      Generic.xaml (Template + Farbpaletten)
-samples/DiffViewer.Sample/   Beispiel-App (zwei TextBoxen + Viewer + Einstellungen)
-docs/ARCHITECTURE.md         Mapping Original → Portierung, Designentscheidungen
+samples/WinUI.DiffViewer.SampleApp/   Gallery-Sample-App (siehe unten)
+docs/ARCHITECTURE.md                  Mapping Original → Portierung, Designentscheidungen
 ```
+
+## Sample App
+
+`samples/WinUI.DiffViewer.SampleApp` ist eine Gallery-App nach dem Vorbild der
+[WinUI.TableView-SampleApp](https://github.com/w-ahmad/WinUI.TableView): links eine
+NavigationView mit einer Seite pro Feature, rechts das Live-Beispiel mit einem
+Options-Panel, das die Control-Properties direkt bindet — plus aufklappbarem
+Quellcode (XAML/C#, mit live eingesetzten Property-Werten), Theme-Toggle pro
+Beispiel und GitHub-Links auf die jeweilige Page.
+
+| Seite | Zeigt |
+|---|---|
+| Overview | Alle Optionen an einem Beispiel (View mode, Highlighting, Ignore, Sync-Scroll) |
+| View Modes | `ViewMode`: SideBySide vs. Unified |
+| Highlighting | `HighlightMode`: Lines / Words / Characters / None |
+| Whitespace Handling | `IgnorePolicy`: Default / TrimWhitespaces / IgnoreWhitespaces |
+| Live Editing | Editierbare Panes, `DiffComputed`-Event-Log |
+| Synchronized Scrolling | Unterschiedlich lange Dokumente, Scroll-Mapping über Change-Anker |
+| Large Files | Generierte Großdokumente + Berechnungszeit |
+| Settings | App-Theme (Light/Dark/System), Version, Links |
 
 ## Als NuGet-Paket (GitHub Packages)
 
@@ -101,7 +121,7 @@ Voraussetzungen: **Windows 10/11, Visual Studio 2022** mit der Workload „WinUI
 
 ```
 dotnet build WinUI.DiffViewer.sln
-dotnet run --project samples/DiffViewer.Sample   (oder Start über Visual Studio, Plattform x64)
+dotnet run --project samples/WinUI.DiffViewer.SampleApp   (oder Start über Visual Studio, Plattform x64)
 ```
 
 > **Hinweis:** Dieses Projekt wurde in einer Linux-Umgebung erstellt. Die Schichten `Core/` und
@@ -126,10 +146,10 @@ Eigene Farben definierst du in `Application.Resources`; sie haben immer Vorrang:
 </Application.Resources>
 ```
 
-## Bewusste Einschränkungen (v0.1)
+## Bewusste Einschränkungen
 
-- **Read-only**: kein Editieren, keine Accept/Append-Chevrons, kein Merge-Modus.
-- Kein Folding („Collapse Unchanged Fragments"), keine Kurven im Divider.
+- Keine Accept/Append-Chevrons, kein Merge-Modus (Editieren in den Panes geht seit v0.2).
+- Kein Folding („Collapse Unchanged Fragments").
 - Kein Syntax-Highlighting (IntelliJ bekommt das gratis durch echte Editor-Instanzen).
 - Vereinfachungen in der Engine gegenüber dem Original sind in `docs/ARCHITECTURE.md` dokumentiert.
 

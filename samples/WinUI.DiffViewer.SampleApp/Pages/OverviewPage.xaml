@@ -1,0 +1,64 @@
+<Page x:Class="WinUI.DiffViewer.SampleApp.Pages.OverviewPage"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:local="using:WinUI.DiffViewer.SampleApp"
+      xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+      xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+      xmlns:dv="using:WinUI.DiffViewer.Controls"
+      xmlns:core="using:WinUI.DiffViewer.Core"
+      xmlns:controls="using:WinUI.DiffViewer.SampleApp.Controls"
+      mc:Ignorable="d">
+
+    <Grid>
+        <controls:SamplePresenter Header="Overview"
+                                  Description="An editable side-by-side / unified diff viewer for WinUI 3 in the JetBrains style: both line-number gutters in the middle, connector curves, and live re-diff while typing. Set OldText and NewText — the diff is computed on a background thread.">
+            <controls:SamplePresenter.Example>
+                <dv:DiffViewer x:Name="viewer" />
+            </controls:SamplePresenter.Example>
+            <controls:SamplePresenter.Options>
+                <StackPanel Spacing="16">
+                    <ComboBox Header="View mode"
+                              HorizontalAlignment="Stretch"
+                              ItemsSource="{local:EnumValues Type=dv:DiffViewMode}"
+                              SelectedItem="{Binding ViewMode, Mode=TwoWay, ElementName=viewer}" />
+                    <ComboBox Header="Highlighting"
+                              HorizontalAlignment="Stretch"
+                              ItemsSource="{local:EnumValues Type=core:HighlightMode}"
+                              SelectedItem="{Binding HighlightMode, Mode=TwoWay, ElementName=viewer}" />
+                    <ComboBox Header="Ignore differences"
+                              HorizontalAlignment="Stretch"
+                              ItemsSource="{local:EnumValues Type=core:ComparisonPolicy}"
+                              SelectedItem="{Binding IgnorePolicy, Mode=TwoWay, ElementName=viewer}" />
+                    <ToggleSwitch Header="Synchronize scrolling"
+                                  IsOn="{Binding SynchronizeScrolling, Mode=TwoWay, ElementName=viewer}" />
+                </StackPanel>
+            </controls:SamplePresenter.Options>
+            <controls:SamplePresenter.Xaml>
+                <x:String xml:space="preserve">
+&lt;dv:DiffViewer x:Name="viewer"
+    ViewMode="$(ViewMode)"
+    HighlightMode="$(HighlightMode)"
+    IgnorePolicy="$(IgnorePolicy)"
+    SynchronizeScrolling="$(SynchronizeScrolling)" /&gt;
+                </x:String>
+            </controls:SamplePresenter.Xaml>
+            <controls:SamplePresenter.CSharp>
+                <x:String xml:space="preserve">
+viewer.OldText = File.ReadAllText("before.cs");
+viewer.NewText = File.ReadAllText("after.cs");
+// All properties are DependencyProperties — every change re-computes the diff.
+                </x:String>
+            </controls:SamplePresenter.CSharp>
+            <controls:SamplePresenter.Substitutions>
+                <controls:CodeSubstitution Key="ViewMode"
+                                           Value="{x:Bind viewer.ViewMode, Mode=OneWay}" />
+                <controls:CodeSubstitution Key="HighlightMode"
+                                           Value="{x:Bind viewer.HighlightMode, Mode=OneWay}" />
+                <controls:CodeSubstitution Key="IgnorePolicy"
+                                           Value="{x:Bind viewer.IgnorePolicy, Mode=OneWay}" />
+                <controls:CodeSubstitution Key="SynchronizeScrolling"
+                                           Value="{x:Bind viewer.SynchronizeScrolling, Mode=OneWay}" />
+            </controls:SamplePresenter.Substitutions>
+        </controls:SamplePresenter>
+    </Grid>
+</Page>

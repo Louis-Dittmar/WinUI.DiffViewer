@@ -1,0 +1,49 @@
+<Page x:Class="WinUI.DiffViewer.SampleApp.Pages.LargeFilesPage"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:local="using:WinUI.DiffViewer.SampleApp"
+      xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+      xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+      xmlns:dv="using:WinUI.DiffViewer.Controls"
+      xmlns:controls="using:WinUI.DiffViewer.SampleApp.Controls"
+      mc:Ignorable="d">
+
+    <Grid>
+        <controls:SamplePresenter Header="Large Files"
+                                  Description="The diff (Myers O(ND), ported from IntelliJ) runs on a background thread with latest-wins semantics, so the UI stays responsive while large documents are compared. Generate two documents and watch the compute time.">
+            <controls:SamplePresenter.Example>
+                <dv:DiffViewer x:Name="viewer" />
+            </controls:SamplePresenter.Example>
+            <controls:SamplePresenter.Options>
+                <StackPanel Spacing="16">
+                    <NumberBox x:Name="lineCountBox"
+                               Header="Lines per document"
+                               Minimum="100"
+                               Maximum="200000"
+                               SmallChange="1000"
+                               SpinButtonPlacementMode="Inline"
+                               Value="5000" />
+                    <Button Content="Generate &amp; compare"
+                            HorizontalAlignment="Stretch"
+                            Click="OnGenerateClicked" />
+                    <TextBlock x:Name="timingText"
+                               TextWrapping="Wrap"
+                               Style="{StaticResource BodyTextBlockStyle}" />
+                </StackPanel>
+            </controls:SamplePresenter.Options>
+            <controls:SamplePresenter.CSharp>
+                <x:String xml:space="preserve">
+var stopwatch = Stopwatch.StartNew();
+viewer.DiffComputed += (s, e) =>
+{
+    stopwatch.Stop();
+    timingText.Text = $"computed in {stopwatch.ElapsedMilliseconds} ms";
+};
+
+viewer.OldText = oldDocument;   // triggers a debounced background recompute
+viewer.NewText = newDocument;
+                </x:String>
+            </controls:SamplePresenter.CSharp>
+        </controls:SamplePresenter>
+    </Grid>
+</Page>

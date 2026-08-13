@@ -4,7 +4,7 @@ VisualStudioVersion = 17.9.0.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WinUI.DiffViewer", "src\WinUI.DiffViewer\WinUI.DiffViewer.csproj", "{1B2F0C7A-4A5E-4B7C-9D3E-8F6A1C2D3E4F}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DiffViewer.Sample", "samples\DiffViewer.Sample\DiffViewer.Sample.csproj", "{2C3D1E8B-5B6F-4C8D-AE4F-9A7B2D3E4F5A}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WinUI.DiffViewer.SampleApp", "samples\WinUI.DiffViewer.SampleApp\WinUI.DiffViewer.SampleApp.csproj", "{2C3D1E8B-5B6F-4C8D-AE4F-9A7B2D3E4F5A}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
