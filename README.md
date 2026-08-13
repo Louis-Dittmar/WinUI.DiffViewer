@@ -21,6 +21,10 @@ Myers-O(ND)-LCS, zeilen-/wort-/zeichenweiser Vergleich und die Whitespace-Ignore
 | Ausgerichtete Panes (Füllzeilen) + synchrones Scrollen | `AlignedDiffModel` + `SyncScrollSupport` |
 | Berechnung im Hintergrund-Thread, latest-wins | `DiffViewerBase.rediff()` |
 | Light/Dark/HighContrast-Paletten | Editor-Farbschemata |
+| Block-Splitting: Löschungen/Einfügungen in großen Änderungsblöcken werden eigene Fragmente | `ByWordRt.compareAndSplit` + `LineFragmentSplitter` |
+| Grenzen-Korrektur (Änderungen rasten an Leerzeilen/Whitespace ein) | `ChunkOptimizer` (Line + Word) |
+| Syntax-Highlighting im Unified-Modus (C#/XML/JSON, Auto-Erkennung) — `LanguageMode` | `SyntaxHighlighter`-Tokenklassen |
+| Strg+Mausrad-Zoom, FontFamily/FontSize live umschaltbar | Editor-Zoom |
 
 ## Verwendung
 
@@ -82,7 +86,8 @@ Beispiel und GitHub-Links auf die jeweilige Page.
 | Live Editing | Editierbare Panes, `DiffComputed`-Event-Log |
 | Synchronized Scrolling | Unterschiedlich lange Dokumente, Scroll-Mapping über Change-Anker |
 | Large Files | Generierte Großdokumente + Berechnungszeit |
-| Settings | App-Theme (Light/Dark/System), Version, Links |
+| Syntax Highlighting | `LanguageMode`: Auto / CSharp / Xml / Json / None (Unified-Modus) |
+| Settings | App-Theme, Editor-Font (Consolas/Cascadia/JetBrains Mono) + Schriftgröße, Version, Links |
 
 ## Als NuGet-Paket (GitHub Packages)
 
@@ -150,7 +155,9 @@ Eigene Farben definierst du in `Application.Resources`; sie haben immer Vorrang:
 
 - Keine Accept/Append-Chevrons, kein Merge-Modus (Editieren in den Panes geht seit v0.2).
 - Kein Folding („Collapse Unchanged Fragments").
-- Kein Syntax-Highlighting (IntelliJ bekommt das gratis durch echte Editor-Instanzen).
+- Syntax-Highlighting nur im Unified-Modus: die editierbaren Side-by-Side-Panes sind
+  TextBoxen und können keinen mehrfarbigen Text rendern (IntelliJ bekommt das gratis
+  durch echte Editor-Instanzen).
 - Vereinfachungen in der Engine gegenüber dem Original sind in `docs/ARCHITECTURE.md` dokumentiert.
 
 ## Lizenz
