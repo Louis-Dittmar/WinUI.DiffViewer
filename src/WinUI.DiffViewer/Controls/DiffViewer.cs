@@ -893,7 +893,12 @@ public sealed class DiffViewer : Control
         double rightOff = _right.Scroller?.VerticalOffset ?? 0;
         double padTopLeft = _left.Editor?.Padding.Top ?? 0;
         double padTopRight = _right.Editor?.Padding.Top ?? 0;
-        double mid = width / 2.0;
+
+        // IntelliJ's DiffDrawUtil.CTRL_PROXIMITY_X: both bezier control points
+        // are horizontal (same y as their endpoint) at 30% / 70% of the width,
+        // so the curve leaves and enters the editors tangentially flat.
+        double ctrl1 = width * 0.3;
+        double ctrl2 = width * 0.7;
         var theme = ActualTheme;
 
         foreach (var fragment in _result.Fragments)
@@ -905,9 +910,12 @@ public sealed class DiffViewer : Control
 
             if (Math.Max(lBottom, rBottom) < -64 || Math.Min(lTop, rTop) > height + 64) continue;
 
-            // Give zero-height sides a hairline so the band stays visible.
-            if (lBottom - lTop < 2) lBottom = lTop + 2;
-            if (rBottom - rTop < 2) rBottom = rTop + 2;
+            // Zero-height side: a 2px band centered on the anchor line — the
+            // same geometry as the anchor markers drawn in the panes/gutters
+            // (IntelliJ's DividerPolygon uses [start-1, start+1] here), so the
+            // dark-strip band meets the pane marker at exactly the same height.
+            if (lBottom - lTop < 2) { lTop -= 1; lBottom = lTop + 2; }
+            if (rBottom - rTop < 2) { rTop -= 1; rBottom = rTop + 2; }
 
             var kind = ConnectorKind(fragment.Type);
             var fill = DiffPalette.GetRowBrush(kind, theme, highContrast: false);
@@ -916,15 +924,15 @@ public sealed class DiffViewer : Control
             var figure = new PathFigure { StartPoint = new Point(0, lTop), IsClosed = true, IsFilled = true };
             figure.Segments.Add(new BezierSegment
             {
-                Point1 = new Point(mid, lTop),
-                Point2 = new Point(mid, rTop),
+                Point1 = new Point(ctrl1, lTop),
+                Point2 = new Point(ctrl2, rTop),
                 Point3 = new Point(width, rTop),
             });
             figure.Segments.Add(new LineSegment { Point = new Point(width, rBottom) });
             figure.Segments.Add(new BezierSegment
             {
-                Point1 = new Point(mid, rBottom),
-                Point2 = new Point(mid, lBottom),
+                Point1 = new Point(ctrl2, rBottom),
+                Point2 = new Point(ctrl1, lBottom),
                 Point3 = new Point(0, lBottom),
             });
 
