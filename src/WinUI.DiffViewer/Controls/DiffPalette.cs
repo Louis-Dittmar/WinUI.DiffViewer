@@ -1,3 +1,5 @@
+using System;
+using System.Collections.Generic;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Media;
 using Windows.UI;
@@ -22,6 +24,17 @@ namespace WinUI.DiffViewer.Controls;
 /// </summary>
 internal static class DiffPalette
 {
+    // Brush kinds the cache distinguishes per DiffRowKind and theme.
+    private enum Slot { Row, Word, Gutter }
+
+    // The fallback SolidColorBrushes are immutable, so one instance per
+    // (slot, kind, theme) can be shared by every row. Restyling runs for each
+    // visible row on scroll/theme/font changes — without the cache that
+    // allocated a fresh brush per row each pass. ThreadStatic because XAML
+    // objects have thread affinity (one UI thread per window dispatcher).
+    [ThreadStatic]
+    private static Dictionary<(Slot slot, DiffRowKind kind, bool dark), SolidColorBrush>? _cache;
+
     internal static Brush? GetRowBrush(DiffRowKind kind, ElementTheme theme, bool highContrast)
         => Resolve(kind, theme, highContrast, word: false);
 
@@ -40,7 +53,19 @@ internal static class DiffPalette
         bool dark = theme == ElementTheme.Dark;
         Color color = dark ? DarkColor(kind, word: false) : LightColor(kind, word: false);
         if (color.A == 0) return null;
-        return new SolidColorBrush(Darken(color, 0.85));
+        return GetCached(Slot.Gutter, kind, dark, static (k, d) =>
+            Darken(d ? DarkColor(k, word: false) : LightColor(k, word: false), 0.85));
+    }
+
+    private static SolidColorBrush GetCached(Slot slot, DiffRowKind kind, bool dark, Func<DiffRowKind, bool, Color> colorFactory)
+    {
+        var cache = _cache ??= new Dictionary<(Slot, DiffRowKind, bool), SolidColorBrush>();
+        if (!cache.TryGetValue((slot, kind, dark), out var brush))
+        {
+            brush = new SolidColorBrush(colorFactory(kind, dark));
+            cache.Add((slot, kind, dark), brush);
+        }
+        return brush;
     }
 
     private static Color Darken(Color color, double factor) => Color.FromArgb(
@@ -71,7 +96,9 @@ internal static class DiffPalette
         if (highContrast) return null;
 
         bool dark = theme == ElementTheme.Dark;
-        return new SolidColorBrush(dark ? DarkColor(kind, word) : LightColor(kind, word));
+        return word
+            ? GetCached(Slot.Word, kind, dark, static (k, d) => d ? DarkColor(k, word: true) : LightColor(k, word: true))
+            : GetCached(Slot.Row, kind, dark, static (k, d) => d ? DarkColor(k, word: false) : LightColor(k, word: false));
     }
 
     // Light palette — close to IntelliJ's default light scheme.
