@@ -108,6 +108,7 @@ public sealed class DiffViewer : Control
 
     private bool _pushingToEditors;    // control writes editor.Text (suppress TextChanged feedback)
     private bool _updatingFromEditor;  // editor writes OldText/NewText (suppress push-back)
+    private Pane? _lastEditedPane;     // target of Undo()/Redo() — the pane that changed last
 
     private double _measuredLineHeight = 17.0;
     private double _measuredCharWidth = 7.0;
@@ -246,6 +247,36 @@ public sealed class DiffViewer : Control
 
     /// <summary>Raised when the diff computation failed with an exception.</summary>
     public event EventHandler<Exception>? DiffFailed;
+
+    /// <summary>
+    /// Raised whenever <see cref="CanUndo"/>/<see cref="CanRedo"/> may have
+    /// changed (after edits, applied changes, or programmatic text pushes).
+    /// Lets an app keep its own undo/redo buttons outside the control in sync.
+    /// </summary>
+    public event EventHandler? UndoStateChanged;
+
+    /// <summary>Whether the most recently edited pane has an undoable edit.</summary>
+    public bool CanUndo => _lastEditedPane?.Editor?.CanUndo ?? false;
+
+    /// <summary>Whether the most recently edited pane has a redoable edit.</summary>
+    public bool CanRedo => _lastEditedPane?.Editor?.CanRedo ?? false;
+
+    /// <summary>
+    /// Undoes the last edit in the most recently edited pane (typing or an
+    /// applied change). Same stack as Ctrl+Z inside that editor.
+    /// </summary>
+    public void Undo()
+    {
+        var editor = _lastEditedPane?.Editor;
+        if (editor != null && editor.CanUndo) editor.Undo();
+    }
+
+    /// <summary>Redoes the last undone edit in the most recently edited pane.</summary>
+    public void Redo()
+    {
+        var editor = _lastEditedPane?.Editor;
+        if (editor != null && editor.CanRedo) editor.Redo();
+    }
 
     // -----------------------------------------------------------------
     // Template lifecycle
@@ -460,7 +491,9 @@ public sealed class DiffViewer : Control
         {
             _updatingFromEditor = false;
         }
-        // ScheduleRecompute already ran via OnDiffInputChanged; nothing else to do.
+        // ScheduleRecompute already ran via OnDiffInputChanged.
+        _lastEditedPane = pane;
+        UndoStateChanged?.Invoke(this, EventArgs.Empty);
     }
 
     private void PushTextsToEditors()
@@ -477,6 +510,8 @@ public sealed class DiffViewer : Control
         {
             _pushingToEditors = false;
         }
+        // Programmatic Text assignment resets a TextBox's undo stack.
+        UndoStateChanged?.Invoke(this, EventArgs.Empty);
     }
 
     private static void PushTextToEditor(TextBox? editor, string text)
@@ -1100,6 +1135,20 @@ public sealed class DiffViewer : Control
             return; // stale fragment (text changed since the last recompute)
         }
 
+        // Preferred path: replace the target lines through the editor's
+        // selection. Unlike assigning Text (which resets the TextBox undo
+        // stack), a SelectedText replacement is a regular undoable edit, so
+        // Ctrl+Z and Undo() can revert the applied change.
+        var editor = toRight ? _right.Editor : _left.Editor;
+        if (editor != null &&
+            TryApplyViaSelection(editor, sourceLines, sourceStart, sourceEnd, targetLines, targetStart, targetEnd))
+        {
+            // TextChanged now syncs OldText/NewText and schedules the re-diff.
+            return;
+        }
+
+        // Fallback (no editor attached, or the editor text drifted from the
+        // last computed diff): rebuild the whole text property.
         var newLines = new List<string>(targetLines.Count + (sourceEnd - sourceStart));
         for (int i = 0; i < targetStart; i++) newLines.Add(targetLines[i]);
         for (int i = sourceStart; i < sourceEnd; i++) newLines.Add(sourceLines[i]);
@@ -1108,6 +1157,84 @@ public sealed class DiffViewer : Control
         string newText = string.Join('\n', newLines);
         if (toRight) NewText = newText;
         else OldText = newText;
+    }
+
+    /// <summary>
+    /// Replaces lines [targetStart, targetEnd) of the editor with source lines
+    /// [sourceStart, sourceEnd) via an undoable selection edit. Returns false
+    /// when the editor content no longer matches the diffed line model.
+    /// </summary>
+    private static bool TryApplyViaSelection(
+        TextBox editor,
+        IReadOnlyList<string> sourceLines, int sourceStart, int sourceEnd,
+        IReadOnlyList<string> targetLines, int targetStart, int targetEnd)
+    {
+        // Offsets must index the editor's own text (a WinUI TextBox separates
+        // lines with '\r'), so scan it directly instead of reusing the
+        // normalized offsets of the diff result.
+        string text = editor.Text;
+        var starts = new List<int> { 0 };
+        for (int i = 0; i < text.Length; i++)
+        {
+            char c = text[i];
+            if (c == '\r' || c == '\n')
+            {
+                if (c == '\r' && i + 1 < text.Length && text[i + 1] == '\n') i++;
+                starts.Add(i + 1);
+            }
+        }
+
+        // The editor must still agree with the line model the fragment came
+        // from (same line count, same content in the replaced range) — the
+        // user may have typed while the recompute was still debouncing.
+        int lineCount = starts.Count;
+        if (lineCount != targetLines.Count) return false;
+        for (int i = targetStart; i < targetEnd; i++)
+        {
+            int end = i + 1 < lineCount ? starts[i + 1] : text.Length;
+            while (end > starts[i] && (text[end - 1] == '\r' || text[end - 1] == '\n')) end--;
+            if (!string.Equals(text.Substring(starts[i], end - starts[i]), targetLines[i], StringComparison.Ordinal))
+            {
+                return false;
+            }
+        }
+
+        const char Sep = '\r'; // the TextBox's internal separator
+        var slice = new string[sourceEnd - sourceStart];
+        for (int i = sourceStart; i < sourceEnd; i++) slice[i - sourceStart] = sourceLines[i];
+        string replacement = string.Join(Sep, slice);
+        bool sourceEmpty = sourceEnd <= sourceStart;
+
+        int selStart, selEnd;
+        if (targetEnd < lineCount)
+        {
+            selStart = starts[targetStart];
+            selEnd = starts[targetEnd];
+            if (!sourceEmpty) replacement += Sep;
+        }
+        else if (targetStart >= lineCount)
+        {
+            // Insertion after the very last line.
+            selStart = selEnd = text.Length;
+            if (!sourceEmpty) replacement = Sep + replacement;
+        }
+        else
+        {
+            // Range reaches the end of the text: there is no trailing
+            // separator to consume, so a pure deletion eats the preceding one.
+            selStart = starts[targetStart];
+            selEnd = text.Length;
+            if (sourceEmpty && targetStart > 0) selStart--;
+        }
+
+        if (selStart == selEnd && replacement.Length == 0) return true; // no-op
+
+        // Focus first so Ctrl+Z works right after clicking the chevron.
+        editor.Focus(FocusState.Programmatic);
+        editor.Select(selStart, selEnd - selStart);
+        editor.SelectedText = replacement;
+        editor.Select(selStart + replacement.Length, 0);
+        return true;
     }
 
     private static DiffRowKind RowKindFor(LineFragmentType type, bool side1) => type switch

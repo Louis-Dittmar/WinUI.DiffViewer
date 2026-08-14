@@ -16,9 +16,20 @@ public sealed partial class LiveEditingPage : Page
         EditorSettings.Apply(viewer);
         eventLog.ItemsSource = _log;
         viewer.DiffComputed += OnDiffComputed;
+        viewer.UndoStateChanged += OnUndoStateChanged;
         viewer.OldText = DemoContent.OldLineComparator;
         viewer.NewText = DemoContent.NewLineComparator;
     }
+
+    private void OnUndoStateChanged(object? sender, EventArgs e)
+    {
+        undoButton.IsEnabled = viewer.CanUndo;
+        redoButton.IsEnabled = viewer.CanRedo;
+    }
+
+    private void OnUndoClicked(object sender, RoutedEventArgs e) => viewer.Undo();
+
+    private void OnRedoClicked(object sender, RoutedEventArgs e) => viewer.Redo();
 
     private void OnDiffComputed(object? sender, EventArgs e)
     {

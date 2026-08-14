@@ -19,6 +19,19 @@
                     <Button Content="Reset sample text"
                             HorizontalAlignment="Stretch"
                             Click="OnResetClicked" />
+                    <!-- App-side undo/redo: the buttons live outside the
+                         control and just call viewer.Undo()/Redo(); their
+                         enabled state tracks viewer.UndoStateChanged. -->
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <Button x:Name="undoButton"
+                                Content="Undo"
+                                IsEnabled="False"
+                                Click="OnUndoClicked" />
+                        <Button x:Name="redoButton"
+                                Content="Redo"
+                                IsEnabled="False"
+                                Click="OnRedoClicked" />
+                    </StackPanel>
                     <TextBlock Text="DiffComputed log"
                                Style="{StaticResource BodyStrongTextBlockStyle}" />
                     <ItemsControl x:Name="eventLog"
@@ -32,6 +45,11 @@ viewer.DiffFailed += (s, ex) => statusBar.Text = ex.Message;
 
 // Edits in either pane write back to OldText/NewText:
 string edited = viewer.NewText;
+
+// Typing and applied changes (chevron buttons) share the editor
+// undo stack, so Ctrl+Z works — or host your own buttons:
+viewer.UndoStateChanged += (s, e) => undoButton.IsEnabled = viewer.CanUndo;
+undoButton.Click += (s, e) => viewer.Undo();
                 </x:String>
             </controls:SamplePresenter.CSharp>
         </controls:SamplePresenter>
