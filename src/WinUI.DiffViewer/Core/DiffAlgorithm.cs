@@ -156,6 +156,11 @@ public static class DiffAlgorithm
         IEqualityComparer<T> comparer)
         where T : notnull
     {
+        // The scan is O(window x run) in the worst case (highly repetitive
+        // inputs). Skipping the slide is purely cosmetic, so bail out instead
+        // of burning quadratic time on pathological files.
+        if ((long)(current - lowerBound) * Math.Max(n, 1) > 16_000_000) return current;
+
         for (int p = lowerBound; p < current; p++)
         {
             bool matches = true;
