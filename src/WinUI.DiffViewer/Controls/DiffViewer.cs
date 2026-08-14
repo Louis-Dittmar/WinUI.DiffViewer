@@ -1268,6 +1268,10 @@ public sealed class DiffViewer : Control
         bool highContrast = IsHighContrast();
         grid.Background = DiffPalette.GetRowBrush(row.Kind, ActualTheme, highContrast);
 
+        // Keeps empty lines from collapsing to zero height (an empty
+        // TextBlock measures 0); +2 covers the children's vertical margins.
+        grid.MinHeight = Math.Ceiling(_measuredLineHeight) + 2;
+
         // Number column width follows the widest line number at the current
         // font metrics (same reasoning as the side-by-side gutters).
         if (_result != null && grid.ColumnDefinitions.Count > 0)

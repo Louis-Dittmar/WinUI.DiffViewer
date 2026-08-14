@@ -34,25 +34,23 @@
         </ResourceDictionary>
     </ResourceDictionary.ThemeDictionaries>
 
-    <!-- Unified row template. Background and word-highlight brushes are set in
-         code-behind (DiffViewer.StyleUnifiedRow) when rows are prepared. -->
+    <!-- Unified row template. Brushes, fonts, row height and the number
+         column width are all set in code-behind (DiffViewer.StyleUnifiedRow)
+         when rows are prepared — they derive from the control's font metrics,
+         so nothing text-dependent is hardcoded here. -->
     <DataTemplate x:Key="DiffUnifiedRowTemplate">
-        <Grid MinHeight="18">
+        <Grid>
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="52" />
+                <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>
             <TextBlock Text="{Binding UnifiedLineNumber}"
                        Foreground="{ThemeResource DiffLineNumberBrush}"
-                       FontFamily="Consolas"
-                       FontSize="13"
                        TextAlignment="Right"
                        Margin="0,1,10,1" />
             <controls:HighlightableTextBlock Grid.Column="1"
                                              Text="{Binding Text}"
                                              Spans="{Binding Highlights}"
-                                             FontFamily="Consolas"
-                                             FontSize="13"
                                              Margin="0,1,8,1" />
         </Grid>
     </DataTemplate>
