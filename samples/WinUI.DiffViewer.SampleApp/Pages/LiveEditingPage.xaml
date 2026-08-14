@@ -46,8 +46,9 @@ viewer.DiffFailed += (s, ex) => statusBar.Text = ex.Message;
 // Edits in either pane write back to OldText/NewText:
 string edited = viewer.NewText;
 
-// Typing and applied changes (chevron buttons) share the editor
-// undo stack, so Ctrl+Z works — or host your own buttons:
+// Typing and applied changes (chevron buttons) land in ONE shared
+// history across both panes — Ctrl+Z/Ctrl+Y anywhere walk it in
+// chronological order. Host your own buttons outside the control:
 viewer.UndoStateChanged += (s, e) => undoButton.IsEnabled = viewer.CanUndo;
 undoButton.Click += (s, e) => viewer.Undo();
                 </x:String>

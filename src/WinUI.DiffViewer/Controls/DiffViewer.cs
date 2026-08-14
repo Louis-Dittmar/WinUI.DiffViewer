@@ -108,7 +108,25 @@ public sealed class DiffViewer : Control
 
     private bool _pushingToEditors;    // control writes editor.Text (suppress TextChanged feedback)
     private bool _updatingFromEditor;  // editor writes OldText/NewText (suppress push-back)
-    private Pane? _lastEditedPane;     // target of Undo()/Redo() — the pane that changed last
+
+    // Shared undo/redo history across both panes. Every editor mutation is
+    // recorded as a minimal delta; Undo()/Redo() replay them in strict
+    // chronological order regardless of which editor they happened in.
+    private const int MaxUndoEntries = 1000;
+    private readonly List<EditRecord> _undoStack = new();
+    private readonly List<EditRecord> _redoStack = new();
+    private bool _applyingHistory;     // Undo()/Redo() mutates an editor (suppress recording)
+    private string _lastLeftText = string.Empty;   // previous editor texts, for delta extraction
+    private string _lastRightText = string.Empty;
+
+    /// <summary>One edit in the shared history: replaced Removed with Inserted at Start.</summary>
+    private sealed class EditRecord
+    {
+        public bool IsLeft;
+        public int Start;          // char offset in the editor's own text ('\r' separators)
+        public string Removed = string.Empty;
+        public string Inserted = string.Empty;
+    }
 
     private double _measuredLineHeight = 17.0;
     private double _measuredCharWidth = 7.0;
@@ -255,27 +273,38 @@ public sealed class DiffViewer : Control
     /// </summary>
     public event EventHandler? UndoStateChanged;
 
-    /// <summary>Whether the most recently edited pane has an undoable edit.</summary>
-    public bool CanUndo => _lastEditedPane?.Editor?.CanUndo ?? false;
+    /// <summary>Whether the shared edit history has an entry to undo.</summary>
+    public bool CanUndo => _undoStack.Count > 0;
 
-    /// <summary>Whether the most recently edited pane has a redoable edit.</summary>
-    public bool CanRedo => _lastEditedPane?.Editor?.CanRedo ?? false;
+    /// <summary>Whether the shared edit history has an entry to redo.</summary>
+    public bool CanRedo => _redoStack.Count > 0;
 
     /// <summary>
-    /// Undoes the last edit in the most recently edited pane (typing or an
-    /// applied change). Same stack as Ctrl+Z inside that editor.
+    /// Undoes the chronologically last edit across BOTH panes (typing or an
+    /// applied change), repeatedly walking one shared history. Ctrl+Z inside
+    /// either editor is routed here, so keyboard and API stay in sync.
     /// </summary>
     public void Undo()
     {
-        var editor = _lastEditedPane?.Editor;
-        if (editor != null && editor.CanUndo) editor.Undo();
+        if (_undoStack.Count == 0) return;
+
+        var record = _undoStack[^1];
+        _undoStack.RemoveAt(_undoStack.Count - 1);
+        _redoStack.Add(record);
+        ApplyRecord(record, undo: true);
+        UndoStateChanged?.Invoke(this, EventArgs.Empty);
     }
 
-    /// <summary>Redoes the last undone edit in the most recently edited pane.</summary>
+    /// <summary>Redoes the last undone edit (shared history across both panes).</summary>
     public void Redo()
     {
-        var editor = _lastEditedPane?.Editor;
-        if (editor != null && editor.CanRedo) editor.Redo();
+        if (_redoStack.Count == 0) return;
+
+        var record = _redoStack[^1];
+        _redoStack.RemoveAt(_redoStack.Count - 1);
+        _undoStack.Add(record);
+        ApplyRecord(record, undo: false);
+        UndoStateChanged?.Invoke(this, EventArgs.Empty);
     }
 
     // -----------------------------------------------------------------
@@ -338,6 +367,9 @@ public sealed class DiffViewer : Control
         {
             pane.Editor.Loaded += OnEditorLoaded;
             pane.Editor.TextChanged += isLeft ? OnLeftEditorTextChanged : OnRightEditorTextChanged;
+            // Route Ctrl+Z / Ctrl+Y / Ctrl+Shift+Z into the shared history
+            // before the TextBox can run its own per-editor undo.
+            pane.Editor.PreviewKeyDown += OnEditorPreviewKeyDown;
         }
         if (pane.HighlightHost != null)
         {
@@ -364,6 +396,7 @@ public sealed class DiffViewer : Control
             pane.Editor.Loaded -= OnEditorLoaded;
             pane.Editor.TextChanged -= OnLeftEditorTextChanged;
             pane.Editor.TextChanged -= OnRightEditorTextChanged;
+            pane.Editor.PreviewKeyDown -= OnEditorPreviewKeyDown;
         }
         if (pane.Scroller != null)
         {
@@ -479,21 +512,140 @@ public sealed class DiffViewer : Control
 
     private void OnEditorTextChanged(Pane pane, bool isLeft)
     {
-        if (_pushingToEditors || pane.Editor == null) return;
+        if (pane.Editor == null) return;
+
+        string newText = pane.Editor.Text;
+        string oldText = isLeft ? _lastLeftText : _lastRightText;
+        if (isLeft) _lastLeftText = newText;
+        else _lastRightText = newText;
+
+        // Programmatic OldText/NewText pushes reset the document; the push
+        // site already cleared the history.
+        if (_pushingToEditors) return;
+
+        if (!_applyingHistory && !string.Equals(oldText, newText, StringComparison.Ordinal))
+        {
+            RecordEdit(isLeft, oldText, newText);
+            _redoStack.Clear();
+        }
 
         _updatingFromEditor = true;
         try
         {
-            if (isLeft) OldText = pane.Editor.Text;
-            else NewText = pane.Editor.Text;
+            if (isLeft) OldText = newText;
+            else NewText = newText;
         }
         finally
         {
             _updatingFromEditor = false;
         }
         // ScheduleRecompute already ran via OnDiffInputChanged.
-        _lastEditedPane = pane;
         UndoStateChanged?.Invoke(this, EventArgs.Empty);
+    }
+
+    /// <summary>
+    /// Extracts the minimal delta between the previous and current editor text
+    /// and appends it to the shared history. Plain typing and backspace/delete
+    /// runs coalesce into their preceding entry, so one Undo() removes a burst
+    /// of typing instead of a single character.
+    /// </summary>
+    private void RecordEdit(bool isLeft, string oldText, string newText)
+    {
+        int max = Math.Min(oldText.Length, newText.Length);
+        int prefix = 0;
+        while (prefix < max && oldText[prefix] == newText[prefix]) prefix++;
+        int suffix = 0;
+        while (suffix < max - prefix &&
+               oldText[oldText.Length - 1 - suffix] == newText[newText.Length - 1 - suffix])
+        {
+            suffix++;
+        }
+
+        string removed = oldText.Substring(prefix, oldText.Length - suffix - prefix);
+        string inserted = newText.Substring(prefix, newText.Length - suffix - prefix);
+        if (removed.Length == 0 && inserted.Length == 0) return;
+
+        if (_undoStack.Count > 0)
+        {
+            var last = _undoStack[^1];
+            if (last.IsLeft == isLeft && _redoStack.Count == 0)
+            {
+                // Typing continuation: a single non-newline char appended
+                // right after the previous insertion.
+                if (removed.Length == 0 && inserted.Length == 1 && inserted[0] != '\r' && inserted[0] != '\n' &&
+                    last.Removed.Length == 0 && prefix == last.Start + last.Inserted.Length)
+                {
+                    last.Inserted += inserted;
+                    return;
+                }
+                // Backspace run: single char removed directly before the
+                // previous removal.
+                if (inserted.Length == 0 && removed.Length == 1 &&
+                    last.Inserted.Length == 0 && prefix + 1 == last.Start)
+                {
+                    last.Start = prefix;
+                    last.Removed = removed + last.Removed;
+                    return;
+                }
+                // Delete-key run: single char removed at the same position.
+                if (inserted.Length == 0 && removed.Length == 1 &&
+                    last.Inserted.Length == 0 && prefix == last.Start)
+                {
+                    last.Removed += removed;
+                    return;
+                }
+            }
+        }
+
+        _undoStack.Add(new EditRecord { IsLeft = isLeft, Start = prefix, Removed = removed, Inserted = inserted });
+        if (_undoStack.Count > MaxUndoEntries) _undoStack.RemoveAt(0);
+    }
+
+    /// <summary>Replays (redo) or inverts (undo) one history entry in its editor.</summary>
+    private void ApplyRecord(EditRecord record, bool undo)
+    {
+        var editor = record.IsLeft ? _left.Editor : _right.Editor;
+        if (editor == null) return;
+
+        string select = undo ? record.Inserted : record.Removed;
+        string replace = undo ? record.Removed : record.Inserted;
+
+        _applyingHistory = true;
+        try
+        {
+            editor.Focus(FocusState.Programmatic);
+            editor.Select(record.Start, select.Length);
+            editor.SelectedText = replace;
+            editor.Select(record.Start + replace.Length, 0);
+            // The native per-TextBox stack is bypassed (Ctrl+Z is intercepted);
+            // drop its now-stale entries so the context menu cannot replay them.
+            editor.ClearUndoRedoHistory();
+        }
+        finally
+        {
+            _applyingHistory = false;
+        }
+    }
+
+    private void OnEditorPreviewKeyDown(object sender, KeyRoutedEventArgs e)
+    {
+        var ctrl = InputKeyboardSource.GetKeyStateForCurrentThread(Windows.System.VirtualKey.Control);
+        if (!ctrl.HasFlag(CoreVirtualKeyStates.Down)) return;
+
+        var shift = InputKeyboardSource.GetKeyStateForCurrentThread(Windows.System.VirtualKey.Shift);
+        bool shiftDown = shift.HasFlag(CoreVirtualKeyStates.Down);
+
+        if (e.Key == Windows.System.VirtualKey.Z && !shiftDown)
+        {
+            e.Handled = true;
+            Undo();
+        }
+        else if (e.Key == Windows.System.VirtualKey.Y ||
+                 (e.Key == Windows.System.VirtualKey.Z && shiftDown))
+        {
+            e.Handled = true;
+            Redo();
+        }
     }
 
     private void PushTextsToEditors()
@@ -503,20 +655,27 @@ public sealed class DiffViewer : Control
         _pushingToEditors = true;
         try
         {
-            PushTextToEditor(_left.Editor, OldText ?? string.Empty);
-            PushTextToEditor(_right.Editor, NewText ?? string.Empty);
+            bool changed = PushTextToEditor(_left.Editor, OldText ?? string.Empty);
+            changed |= PushTextToEditor(_right.Editor, NewText ?? string.Empty);
+
+            if (changed)
+            {
+                // A programmatic reset replaces the documents — the recorded
+                // deltas no longer apply to the new content.
+                _undoStack.Clear();
+                _redoStack.Clear();
+            }
         }
         finally
         {
             _pushingToEditors = false;
         }
-        // Programmatic Text assignment resets a TextBox's undo stack.
         UndoStateChanged?.Invoke(this, EventArgs.Empty);
     }
 
-    private static void PushTextToEditor(TextBox? editor, string text)
+    private static bool PushTextToEditor(TextBox? editor, string text)
     {
-        if (editor == null) return;
+        if (editor == null) return false;
 
         // TextBox normalizes line breaks to '\r'; compare normalized so we do
         // not reset the caret when the content is effectively unchanged.
@@ -525,7 +684,9 @@ public sealed class DiffViewer : Control
         if (!string.Equals(current, target, StringComparison.Ordinal))
         {
             editor.Text = text;
+            return true;
         }
+        return false;
     }
 
     // -----------------------------------------------------------------
@@ -1136,9 +1297,9 @@ public sealed class DiffViewer : Control
         }
 
         // Preferred path: replace the target lines through the editor's
-        // selection. Unlike assigning Text (which resets the TextBox undo
-        // stack), a SelectedText replacement is a regular undoable edit, so
-        // Ctrl+Z and Undo() can revert the applied change.
+        // selection. Unlike assigning Text (which rewrites the document and
+        // clears the shared history), this flows through TextChanged as a
+        // regular edit delta, so Ctrl+Z / Undo() can revert the apply.
         var editor = toRight ? _right.Editor : _left.Editor;
         if (editor != null &&
             TryApplyViaSelection(editor, sourceLines, sourceStart, sourceEnd, targetLines, targetStart, targetEnd))
