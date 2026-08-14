@@ -20,8 +20,18 @@ public sealed class DiffBitSet
 
     public bool Get(int index)
     {
-        if ((uint)index >= (uint)Length) throw new ArgumentOutOfRangeException(nameof(index));
+        if (index < 0) throw new ArgumentOutOfRangeException(nameof(index));
+        // Like java.util.BitSet, reads past the logical length yield false
+        // (the Reindexer probes one past the end of an exhausted side).
+        if (index >= Length) return false;
         return (_words[index >> 6] & (1UL << (index & 63))) != 0;
+    }
+
+    public void Set(int index, bool value)
+    {
+        if ((uint)index >= (uint)Length) throw new ArgumentOutOfRangeException(nameof(index));
+        if (value) _words[index >> 6] |= 1UL << (index & 63);
+        else _words[index >> 6] &= ~(1UL << (index & 63));
     }
 
     public void Set(int fromInclusive, int toExclusive) => Set(fromInclusive, toExclusive, true);

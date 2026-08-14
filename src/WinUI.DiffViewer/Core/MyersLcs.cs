@@ -72,6 +72,19 @@ public sealed class MyersLcs
         Execute(_count1 + _count2, false);
     }
 
+    /// <summary>
+    /// Runs with the configured difference bound and throws
+    /// <see cref="DiffTooBigException"/> when it is exceeded, so the caller
+    /// can fall back to the patience algorithm (port of executeWithThreshold).
+    /// </summary>
+    public void ExecuteWithThreshold()
+    {
+        int threshold = Math.Max(
+            20000 + 10 * (int)Math.Sqrt(_count1 + _count2),
+            DiffConfig.DeltaThresholdSize);
+        Execute(threshold, true);
+    }
+
     private void Execute(int threshold, bool throwException)
     {
         if (_count1 == 0 || _count2 == 0) return;

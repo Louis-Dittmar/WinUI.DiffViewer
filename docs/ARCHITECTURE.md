@@ -25,7 +25,10 @@ DiffComputer (Facade)                   ← entspricht ComparisonManagerImpl.com
 |---|---|---|
 | `platform/util/diff/.../util/diff/MyersLCS.kt` | `Core/MyersLcs.cs` | **1:1-Portierung** (Linear-Space-Myers, Vorwärts-/Rückwärts-k-Linien, Middle-Snake-Rekursion, identische Schwellwerte) |
 | `platform/util/diff/.../util/diff/BitSet.kt` | `Core/DiffBitSet.cs` | Minimal-Subset (Set/Get/Bereichs-Set) |
-| `platform/util/diff/.../util/diff/Diff.kt` | `Core/DiffAlgorithm.cs` | Pipeline portiert: Präfix/Suffix-Trim, Objekt→Int-Enumeration, Myers, Range-Rekonstruktion. **Weggelassen:** `Reindexer.discardUnique` (reine Performance-Optimierung) und der Patience-Fallback (`ExecuteLinear` wirft nie) |
+| `platform/util/diff/.../util/diff/Diff.kt` | `Core/DiffAlgorithm.cs` | Volle Pipeline: Präfix/Suffix-Trim, Enumeration, `Reindexer.discardUnique`, Myers mit Threshold (`executeWithThreshold`) und `PatienceIntLCS`-Fallback, `Reindexer.reindex`. **Abweichungen:** (1) schlägt auch der Patience-Fallback fehl, liefern wir dessen ungeprüftes Ergebnis statt `FilesTooBigForDiffException` (ein Editor-Control darf den Diff nicht verweigern); (2) `NormalizeMatchPositions` schiebt gematchte Läufe an die früheste äquivalente Position (git-Konvention) — der bidirektionale Linear-Space-Myers wählt bei wiederholten Blöcken sonst ein mittleres Vorkommen, wodurch ein duplizierter Block als Riesen-Änderung statt als Einfügung erscheint |
+| `.../util/diff/Reindexer.kt`, `LCSBuilder.kt` | `Core/Reindexer.cs` | 1:1 (BitSet-Reindex, `ILcsBuilder`) |
+| `.../util/diff/PatienceIntLCS.kt`, `UniqueLCS.kt` | `Core/PatienceIntLcs.cs`, `Core/UniqueLcs.cs` | 1:1 (Unique-Anker + LIS, Rekursion in die Lücken, `checkReduction`) |
+| `.../util/diff/DiffConfig.kt` | `Core/DiffConfig.cs` | Konstanten; `UNIMPORTANT_LINE_CHAR_COUNT` liegt weiterhin in `TextUtil` |
 | `.../comparison/ComparisonPolicy.kt` | `Core/ComparisonPolicy.cs` | 1:1 |
 | `.../comparison/ComparisonUtil.kt` | `Core/TextUtil.cs` | Policy-Equality + Java-kompatible Hashes 1:1 (inkl. der Spezialsemantik von `equalsTrimWhitespaces` für innere Zeilen) |
 | `.../comparison/TrimUtil.kt` | `Core/TextUtil.cs` | Zeichenklassen (`isPunctuation`, `isAlpha`, `isContinuousScript`) portiert; Unicode-Bereiche über .NET-`UnicodeCategory` statt eingebetteter UCD-Tabellen |
