@@ -1019,44 +1019,60 @@ public sealed class DiffViewer : Control
 
             if (ShowApplyButtons)
             {
-                // IntelliJ-style accept arrows (12x12 double chevrons in the
-                // original): each button sits on its TARGET side — "«" on the
-                // left pulls the right block in, "»" on the right pulls the
-                // left block in.
-                AddApplyButton(canvas, fragment, toRight: false, x: 1, y: lTop, height);
-                AddApplyButton(canvas, fragment, toRight: true, x: width - 23, y: rTop, height);
+                // Single IntelliJ-style accept arrow, apply left -> right only.
+                // At the divider's horizontal center the bezier edges pass
+                // through the average of their endpoint ys (cubic with 30%/70%
+                // horizontal control points, evaluated at t = 0.5), so the
+                // colored band there spans [(lTop+rTop)/2, (lBottom+rBottom)/2].
+                // Centering the button on that keeps it inside the band and,
+                // for multi-line blocks, vertically in the middle.
+                AddApplyButton(canvas, fragment, width, height,
+                    bandTop: (lTop + rTop) / 2,
+                    bandBottom: (lBottom + rBottom) / 2,
+                    lineHeight: Math.Max(lhLeft, lhRight));
             }
         }
     }
 
-    private void AddApplyButton(Canvas canvas, LineFragment fragment, bool toRight, double x, double y, double viewportHeight)
+    private void AddApplyButton(Canvas canvas, LineFragment fragment, double dividerWidth, double viewportHeight, double bandTop, double bandBottom, double lineHeight)
     {
-        if (y < -8 || y > viewportHeight - 4) return;
+        // Never taller than the band, so the button always stays inside the
+        // colored region; capped at one line height so it stays a compact,
+        // centered chevron on multi-line blocks.
+        double buttonHeight = Math.Max(2, Math.Min(bandBottom - bandTop, lineHeight));
+        double centerY = (bandTop + bandBottom) / 2;
+        if (centerY + buttonHeight / 2 < 0 || centerY - buttonHeight / 2 > viewportHeight) return;
+
+        // Fill the space between the two panes (2px breathing room per side).
+        double buttonWidth = Math.Max(8, dividerWidth - 4);
 
         var button = new Button
         {
-            Width = 22,
-            Height = 22,
+            Width = buttonWidth,
+            Height = buttonHeight,
+            MinWidth = 0,
+            MinHeight = 0,
             Padding = new Thickness(0),
             BorderThickness = new Thickness(0),
             Background = new SolidColorBrush(Microsoft.UI.Colors.Transparent),
             CornerRadius = new CornerRadius(2),
             Content = new TextBlock
             {
-                Text = toRight ? "\u00BB" : "\u00AB", // \u00BB / \u00AB
-                FontSize = 18,
+                Text = "\u00BB", // right-pointing guillemet
+                // Same font as the gutter line numbers (both follow the
+                // control's FontFamily/FontSize, so zooming scales the chevron).
+                FontFamily = FontFamily,
+                FontSize = FontSize,
                 TextLineBounds = TextLineBounds.Tight,
                 HorizontalAlignment = HorizontalAlignment.Center,
                 VerticalAlignment = VerticalAlignment.Center,
             },
         };
-        ToolTipService.SetToolTip(button, toRight
-            ? "Accept left side (copy this block to the right)"
-            : "Accept right side (copy this block to the left)");
-        button.Click += (_, _) => ApplyChange(fragment, toRight);
+        ToolTipService.SetToolTip(button, "Accept left side (copy this block to the right)");
+        button.Click += (_, _) => ApplyChange(fragment, toRight: true);
 
-        Canvas.SetLeft(button, x);
-        Canvas.SetTop(button, Math.Max(0, y));
+        Canvas.SetLeft(button, (dividerWidth - buttonWidth) / 2);
+        Canvas.SetTop(button, centerY - buttonHeight / 2);
         canvas.Children.Add(button);
     }
 
