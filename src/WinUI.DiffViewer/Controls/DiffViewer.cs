@@ -1059,10 +1059,11 @@ public sealed class DiffViewer : Control
             Content = new TextBlock
             {
                 Text = "\u00BB", // right-pointing guillemet
-                // Same font as the gutter line numbers (both follow the
-                // control's FontFamily/FontSize, so zooming scales the chevron).
+                // Follows the control's FontFamily/FontSize (so zooming scales
+                // the chevron); doubled because the guillemet glyph is only
+                // about x-height tall and reads too small at text size.
                 FontFamily = FontFamily,
-                FontSize = FontSize,
+                FontSize = FontSize * 2,
                 TextLineBounds = TextLineBounds.Tight,
                 HorizontalAlignment = HorizontalAlignment.Center,
                 VerticalAlignment = VerticalAlignment.Center,
