@@ -70,7 +70,7 @@ docs/ARCHITECTURE.md                 Mapping Original -> Port, design decisions
 
 ## Sample App
 
-`samples/WinUI.DiffViewer.SampleApp` is a Gallery app based on the WinUI.TableView.SampleApp: on the left is a NavigationView with one page per feature, and on the right is the live example with an Options panel that directly binds the control properties — plus collapsible source code (XAML/C# with live property values), a theme toggle per example and GitHub links to the respective page.
+`samples/WinUI.DiffViewer.SampleApp` is a gallery where you can test the feature. On the left is a navigation view with one page per feature. On the right is the live example with an options panel that binds the control properties directly.
 
 
 | Page | Demonstrates |
@@ -84,50 +84,15 @@ docs/ARCHITECTURE.md                 Mapping Original -> Port, design decisions
 | Large Files | Generated large documents + computation time |
 | Settings | App theme, editor font (Consolas/Cascadia/JetBrains Mono) + font size, version, links |
 
-## As a NuGet Package (GitHub Packages)
 
-The workflow `.github/workflows/publish-nuget.yml` packages the library and publishes it to **GitHub Packages** as soon as this folder is pushed as its own GitHub repository and a `v*` tag (e.g., `v0.2.0`) is created. Alternatively, it can be triggered manually via "Run workflow".
+## Build
 
-
-Verwenden in einem anderen Projekt (`nuget.config` neben der Solution):
-
-```xml
-<?xml version="1.0" encoding="utf-8"?>
-<configuration>
-  <packageSources>
-    <add key="github" value="https://nuget.pkg.github.com/Louis-Dittmar/index.json" />
-  </packageSources>
-  <packageSourceCredentials>
-    <github>
-      <add key="Username" value="DEIN_GITHUB_USER" />
-      <add key="ClearTextPassword" value="DEIN_PAT_MIT_read:packages" />
-    </github>
-  </packageSourceCredentials>
-</configuration>
-```
-
-```xml
-<PackageReference Include="WinUI.DiffViewer" Version="0.2.0" />
-```
-
-Lokal paketieren: `dotnet pack src/WinUI.DiffViewer/WinUI.DiffViewer.csproj -c Release`
-
-## Bauen
-
-Voraussetzungen: **Windows 10/11, Visual Studio 2022** mit der Workload „WinUI application development“
-(bzw. .NET 8 SDK + Windows App SDK 1.5).
+Requirements: Windows 10/11 and Visual Studio 2022 with the "WinUI application development" workload (or .NET 8 SDK + Windows App SDK 1.5).
 
 ```
 dotnet build WinUI.DiffViewer.sln
-dotnet run --project samples/WinUI.DiffViewer.SampleApp   (oder Start über Visual Studio, Plattform x64)
+dotnet run --project samples/WinUI.DiffViewer.SampleApp  (or start via Visual Studio, platform x64.)
 ```
-
-> **Hinweis:** Dieses Projekt wurde in einer Linux-Umgebung erstellt. Die Schichten `Core/` und
-> `Model/` wurden dort mit dem .NET-8-SDK **kompiliert (0 Warnungen) und mit einer Testsuite
-> verifiziert** — u. a. 1.000 randomisierte Diffs mit LCS-Optimalitätsbeweis gegen eine
-> DP-Referenz und 300 randomisierte End-to-End-Rekonstruktionstests. Die WinUI-Schicht
-> (`Controls/`, `Themes/`, Sample) benötigt Windows und wurde stattdessen einem detaillierten
-> API-Review unterzogen; beim allerersten Build können trotzdem Kleinigkeiten auftreten.
 
 ## Customizing Colors
 
