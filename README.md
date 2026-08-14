@@ -1,10 +1,13 @@
-# WinUI.DiffViewer
+# 📝 WinUI.DiffViewer
+
+![Dashboard Overview](docs/overview.png "Dashboard Screenshot")
 
 This is a Diff Viewer Control for WinUI 3. It is a reusable class library with a templated control that compares two texts and displays the differences, similar to the JetBrains/IntelliJ Diff Viewer. It supports side-by-side or unified views with line and word highlighting, line number gutters and synchronous scrolling.
 
-The diff engine is a C# port of the IntelliJ algorithm from IntelliJ Community (Apache 2.0 licence; see NOTICE). It features Myers O(ND) LCS, line/word/character-based comparison and whitespace ignore policies. And Currently has some MAJOR Bugs.
+The diff engine is a C# port of the IntelliJ algorithm from IntelliJ Community (Apache 2.0 licence). It features Myers O(ND) LCS, line/word/character-based comparison and whitespace ignore policies. And Currently has some MAJOR Bugs.
 
-## Features
+# 🚀 Features
+
 
 | Feature | IntelliJ Counterpart |
 | --- | --- |
@@ -21,8 +24,7 @@ The diff engine is a C# port of the IntelliJ algorithm from IntelliJ Community (
 | Ctrl+Mouse wheel zoom, FontFamily/FontSize switchable live | Editor zoom |
 
 
-
-## Usage
+# 🛠️ Usage
 
 ```xml
 <Page xmlns:dv="using:WinUI.DiffViewer.Controls">
@@ -64,14 +66,12 @@ src/WinUI.DiffViewer/
   Controls/    DiffViewer (Templated Control), HighlightableTextBlock, Converters
   Themes/      Generic.xaml (Template + color palettes)
 samples/WinUI.DiffViewer.SampleApp/  Gallery sample app (see below)
-docs/ARCHITECTURE.md                 Mapping Original -> Port, design decisions
-
+docs/ARCHITECTURE.md                 Documentation about the App
 ```
 
 ## Sample App
 
-`samples/WinUI.DiffViewer.SampleApp` is a gallery where you can test the feature. On the left is a navigation view with one page per feature. On the right is the live example with an options panel that binds the control properties directly.
-
+`samples/WinUI.DiffViewer.SampleApp` is a gallery where you can test the features.
 
 | Page | Demonstrates |
 | --- | --- |
@@ -85,7 +85,7 @@ docs/ARCHITECTURE.md                 Mapping Original -> Port, design decisions
 | Settings | App theme, editor font (Consolas/Cascadia/JetBrains Mono) + font size, version, links |
 
 
-## Build
+# ▶️ Build & Start
 
 Requirements: Windows 10/11 and Visual Studio 2022 with the "WinUI application development" workload (or .NET 8 SDK + Windows App SDK 1.5).
 
@@ -106,11 +106,5 @@ The line and word backgrounds are set via code-behind (`DiffPalette`) based on t
 </Application.Resources>
 ```
 
-## Known Limitations
-
-* No Accept/Append chevrons, no merge mode (editing in the panes is supported since v0.2).
-* No syntax highlighting (IntelliJ gets this for free through real editor instances).
-* Simplifications in the engine compared to the original are documented in `docs/ARCHITECTURE.md`.
-
 ## License
-Apache License 2.0, see `LICENSE`. Contains ported code from JetBrains intellij-community, see `NOTICE`.
+Apache License 2.0, see `LICENSE`. Contains ported code from JetBrains intellij-community.
