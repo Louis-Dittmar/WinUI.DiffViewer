@@ -78,7 +78,14 @@ public sealed class HighlightableTextBlock : Control
             return;
         }
 
-        var highlighter = new TextHighlighter { Background = HighlightBrush };
+        // Without an explicit Foreground the highlighter falls back to the
+        // system selection text color (white/black), wiping out the normal
+        // text color — keep whatever the TextBlock already renders with.
+        var highlighter = new TextHighlighter
+        {
+            Background = HighlightBrush,
+            Foreground = _textBlock.Foreground,
+        };
         foreach (var span in spans)
         {
             if (span.Length <= 0) continue;
